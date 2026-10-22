@@ -40,7 +40,7 @@ describe("storeSnapshot", () => {
     const [snap] = await db.select().from(schema.dataSnapshots);
     expect(snap.asOfDate).toBe("2026-10-19");
     expect(snap.rawFilesJson).toEqual(files); // raw files kept for audit (G-D5)
-    expect((snap.validationReportJson as { warnings: unknown[] }).warnings).toHaveLength(13);
+    expect((snap.validationReportJson as { warnings: unknown[] }).warnings).toHaveLength(1);
   }, 60_000);
 
   it("keeps master data current on a second upload without duplicating it", async () => {

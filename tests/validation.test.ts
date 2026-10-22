@@ -25,15 +25,17 @@ describe("seed data", () => {
     expect(r.data!.skusWithoutSales).toEqual([]);
   });
 
-  it("raises only the stock-vs-peak-sales warning on the seed (13 of 15 SKUs)", () => {
+  it("raises one stock-vs-peak-sales warning on the seed: SKU006, about 26x its peak week", () => {
     const r = validate(seedFiles());
-    expect(new Set(codes(r, "warnings"))).toEqual(new Set(["STOCK_UNIT_MISMATCH"]));
-    expect(r.warnings).toHaveLength(13);
+    expect(codes(r, "warnings")).toEqual(["STOCK_UNIT_MISMATCH"]);
+    expect(r.warnings[0].message).toContain("SKU006 has 1100");
   });
 
   it("takes the warning multiple from config, not code", () => {
-    const rules = withRules((c) => (c.data_guardrails.stock_vs_peak_weekly_sales_warning_multiple = 30));
-    expect(validate(seedFiles(), { rules }).warnings).toEqual([]);
+    const at = (m: number) =>
+      withRules((c) => (c.data_guardrails.stock_vs_peak_weekly_sales_warning_multiple = m));
+    expect(validate(seedFiles(), { rules: at(30) }).warnings).toEqual([]);
+    expect(validate(seedFiles(), { rules: at(3) }).warnings).toHaveLength(13); // the value in the original docs
   });
 });
 
@@ -308,19 +310,18 @@ describe("warnings", () => {
     expect(r.data!.skusWithoutSales).toEqual(["SKU015"]);
   });
 
-  it("warns when stock is more than 3x any weekly sales figure", () => {
+  it("warns when stock is more than 15x the SKU's highest weekly sales", () => {
     const f = seedFiles();
-    const edited = replaceOnce(f.inventory, "SKU004,Pune Central Warehouse,180", "SKU004,Pune Central Warehouse,400");
-    const before = validate(f).warnings.length;
+    // SKU004 peak weekly sales is 86, so 15x is 1290.
+    const edited = replaceOnce(f.inventory, "SKU004,Pune Central Warehouse,180", "SKU004,Pune Central Warehouse,1291");
     const r = validate({ ...f, inventory: edited });
-    expect(r.warnings.length).toBe(before + 1);
-    expect(r.warnings.some((w) => w.message.startsWith("SKU004 has 400"))).toBe(true);
+    expect(r.ok).toBe(true);
+    expect(r.warnings.some((w) => w.message.startsWith("SKU004 has 1291"))).toBe(true);
   });
 
-  it("does not warn at exactly 3x the peak", () => {
+  it("does not warn at exactly 15x the peak", () => {
     const f = seedFiles();
-    // SKU004 peak weekly sales is 86, so 258 is exactly 3x.
-    f.inventory = replaceOnce(f.inventory, "SKU004,Pune Central Warehouse,180", "SKU004,Pune Central Warehouse,258");
+    f.inventory = replaceOnce(f.inventory, "SKU004,Pune Central Warehouse,180", "SKU004,Pune Central Warehouse,1290");
     expect(validate(f).warnings.some((w) => w.message.startsWith("SKU004"))).toBe(false);
   });
 });
