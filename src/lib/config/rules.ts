@@ -20,6 +20,9 @@ export interface RulesConfig {
     };
     stockout_reorder_multiplier: number;
     combined_flag_multiplier_policy: string;
+    needs_judgment: {
+      week_on_week_swing_pct: number;
+    };
   };
   ai: {
     provider: string;
