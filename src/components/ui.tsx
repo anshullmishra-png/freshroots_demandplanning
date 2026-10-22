@@ -1,0 +1,87 @@
+import type { ReactNode } from "react";
+
+// Small building blocks from docs/08-UI-DESIGN-SYSTEM.md. No hooks, so these work in server and client components.
+
+export function cx(...parts: Array<string | false | null | undefined>): string {
+  return parts.filter(Boolean).join(" ");
+}
+
+export type PillTone = "active" | "quoted" | "expired" | "success" | "danger" | "judgment";
+
+const PILL: Record<PillTone, string> = {
+  active: "bg-gold text-sapphire",
+  quoted: "bg-sapphire/10 text-sapphire",
+  expired: "bg-track/30 text-gray-600",
+  success: "bg-emerald text-white",
+  danger: "bg-dangermutedbg text-dangermuted",
+  judgment: "border-2 border-gold bg-white text-sapphire",
+};
+
+export function Pill({ tone, children }: { tone: PillTone; children: ReactNode }) {
+  return (
+    <span className={cx("inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em]", PILL[tone])}>
+      {children}
+    </span>
+  );
+}
+
+export function flagTone(flag: string): PillTone {
+  if (flag === "STOCKOUT_RISK") return "active";
+  if (flag === "HIGH_DEMAND") return "quoted";
+  return "expired";
+}
+
+export function Card({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <section className={cx("rounded-card border border-border bg-surface p-6 shadow-[0_1px_2px_rgba(0,0,0,0.05)]", className)}>
+      {children}
+    </section>
+  );
+}
+
+export function CardHeader({ title, action }: { title: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <h2 className="text-2xl font-semibold text-sapphire">{title}</h2>
+      {action}
+    </div>
+  );
+}
+
+export function Label({ children }: { children: ReactNode }) {
+  return <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-mutedtext">{children}</p>;
+}
+
+const BUTTON =
+  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-btn px-5 font-bold transition duration-200 ease-in-out hover:scale-[1.02] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100";
+export const btnPrimary = cx(BUTTON, "bg-gold text-sapphire");
+export const btnSecondary = cx(BUTTON, "border-2 border-sapphire bg-transparent text-sapphire");
+
+export const inputClass =
+  "min-h-[44px] w-full rounded-btn border border-border bg-white px-3 text-sapphire disabled:bg-highlight disabled:text-mutedtext";
+
+export function PageContainer({ children }: { children: ReactNode }) {
+  return <main className="mx-auto w-full max-w-[1200px] px-4 py-6 md:px-8">{children}</main>;
+}
+
+/** Cover bar: a thin bar showing cover weeks against the allowed band (docs/08, "Cover bar"). */
+export function CoverBar({ cover, min, max, flags }: { cover: number; min: number; max: number; flags: string[] }) {
+  const scaleMax = Math.max(max * 1.5, cover * 1.1, 1);
+  const pct = (v: number) => `${Math.min(100, (v / scaleMax) * 100)}%`;
+  const inBand = cover >= min && cover <= max;
+  const markerColour = inBand ? "bg-sapphire" : flags.includes("OVERSTOCK_RISK") ? "bg-dangermuted" : "bg-gold";
+  return (
+    <div className="w-full" role="img" aria-label={`Cover ${cover.toFixed(2)} weeks; allowed ${min} to ${max} weeks`}>
+      <div className="relative h-2 rounded-full bg-track/40">
+        <div className="absolute inset-y-0 rounded-full bg-sapphire/20" style={{ left: pct(min), width: `calc(${pct(max)} - ${pct(min)})` }} />
+        <div className={cx("absolute -top-1 h-4 w-1.5 rounded-full", markerColour)} style={{ left: `calc(${pct(cover)} - 3px)` }} />
+      </div>
+      <div className="mt-1 flex justify-between text-[10px] text-mutedtext">
+        <span>0</span>
+        <span>
+          band {min} to {max} wk
+        </span>
+      </div>
+    </div>
+  );
+}

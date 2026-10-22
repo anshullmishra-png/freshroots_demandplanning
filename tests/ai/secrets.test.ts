@@ -67,8 +67,9 @@ describe("E. the AI code stays on the server", () => {
     });
   const root = path.resolve(__dirname, "../../src");
 
-  it("no page or component imports the AI modules, so they cannot reach the browser bundle", () => {
-    const offenders = files(path.join(root, "app")).filter((f) => /\.(ts|tsx)$/.test(f) && /lib\/ai|@google\/genai/.test(readFileSync(f, "utf8")));
+  it("no client component imports server-only code (AI, database, workflow), so none can reach the browser bundle", () => {
+    const clientFiles = files(root).filter((f) => /\.(ts|tsx)$/.test(f) && /^\s*["']use client["']/m.test(readFileSync(f, "utf8")));
+    const offenders = clientFiles.filter((f) => /lib\/ai|@google\/genai|@\/db|lib\/workflow|node:/.test(readFileSync(f, "utf8")));
     expect(offenders).toEqual([]);
   });
 

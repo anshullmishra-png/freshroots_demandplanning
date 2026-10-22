@@ -37,6 +37,12 @@
   --font-sans: var(--font-inter), sans-serif;
 }
 
+/* Visible keyboard focus everywhere (accessibility rule in docs/08). */
+:focus-visible {
+  outline: 3px solid var(--royal);
+  outline-offset: 2px;
+}
+
 /* The page background is always ivory (no dark mode in this design system). */
 body {
   background: var(--ivory);
