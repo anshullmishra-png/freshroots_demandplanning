@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "_note": "Every threshold in the system lives here. Values marked DEFAULT are pending user confirmation, see docs/12-OPEN-QUESTIONS.md.",
   "rules": {
     "recent_window_weeks": 4,
@@ -60,7 +60,10 @@
   "data_guardrails": {
     "min_weeks_of_sales_required": 12,
     "max_inventory_age_days": 7,
-    "block_run_on_validation_error": true
+    "block_run_on_validation_error": true,
+    "stock_vs_peak_weekly_sales_warning_multiple": 3,
+    "max_file_bytes": 5242880,
+    "max_rows_per_file": 500000
   },
   "timezone": "Asia/Kolkata"
 }
