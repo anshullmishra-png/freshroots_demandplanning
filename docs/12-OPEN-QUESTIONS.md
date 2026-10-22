@@ -30,6 +30,10 @@ Priority A = changes flags or kill behaviour; confirm first. B = changes behavio
 | 22 | C | Spot-check of unflagged SKUs to guard against automation bias (used in the course's hiring example) | **Off.** Not on the approved component map | 05 |
 | 23 | C | Real scale: 400 SKUs and 1,200 distributors versus the 15-SKU seed. Sales are SKU-level in the seed | Build for 400 SKUs; forecasting stays SKU-level in the first release | 03 |
 | 24 | C | Past-year loss history to compare festival quarters like for like | Not available; compare to the stated baseline only | 09 |
+| 25 | A | Doc conflict: a SKU with no sales at all is a WARNING, but fewer than 12 weeks of sales is an ERROR (zero is fewer than 12) | **No sales rows at all = WARNING**, SKU listed in `skusWithoutSales` and not forecast. 1 to 11 weeks = ERROR (blocks the run). **Confirmed by user 2026-10-22** | 03 (Phase 1 built) |
+| 26 | B | "Stock more than 3x any weekly sales figure ever seen" warning: which figure and how many times? At 3x it fired on 13 of the 15 seed SKUs, because normal stock can reach 14 weeks of sales | Compare stock to the SKU's **highest** weekly sales; multiple is `data_guardrails.stock_vs_peak_weekly_sales_warning_multiple` = **15** (config; the docs said 3). **Decided by user 2026-10-22.** On the seed it warns only on SKU006 | 03 (Phase 1 built) |
+| 27 | B | Inventory rows with different `As_Of_Date` values in one upload (not covered in the docs) | ERROR `MIXED_AS_OF_DATES`: one date per run. **Confirmed by user 2026-10-22** | 03 (Phase 1 built) |
+| 28 | B | More than one inventory location per SKU (seed has one) | Validation allows it. Phase 2: sum `Units_On_Hand` across locations. **Confirmed by user 2026-10-22.** Known limit: a stockout at one site can hide behind surplus at another | 02, 03 |
 
 ## How to use this file
 - When a build decision touches one of these, use the default and write a one-line note in the pull request: "Used default for Q#".
