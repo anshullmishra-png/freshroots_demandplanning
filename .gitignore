@@ -30,8 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files: secrets live in .env.local only; .env.example (empty values) is committed
 .env*
+!.env.example
+
+# playwright
+/test-results/
+/playwright-report/
 
 # vercel
 .vercel

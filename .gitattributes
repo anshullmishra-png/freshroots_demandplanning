@@ -1,0 +1,2 @@
+# Keep seed files byte-for-byte as supplied (CRLF), per docs/03-DATA-SPEC.md
+seed/*.csv -text

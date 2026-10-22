@@ -1,0 +1,66 @@
+{
+  "version": "1.0.0",
+  "_note": "Every threshold in the system lives here. Values marked DEFAULT are pending user confirmation, see docs/12-OPEN-QUESTIONS.md.",
+  "rules": {
+    "recent_window_weeks": 4,
+    "average_window_weeks": 12,
+    "average_window_includes_recent": true,
+    "high_demand_threshold_pct": 20,
+    "high_demand_reorder_multiplier": 1.5,
+    "stockout_cover_weeks": 6,
+    "overstock_cover_weeks": 14,
+    "festival_demand_uplift_pct": 25,
+    "festival_months_source": "calendar.csv:Is_Festival_Month",
+    "perishable": {
+      "applies_to_perishability": [
+        "High"
+      ],
+      "min_cover_weeks": 3,
+      "max_cover_weeks": 4
+    },
+    "stockout_reorder_multiplier": 1.0,
+    "combined_flag_multiplier_policy": "highest"
+  },
+  "ai": {
+    "provider": "gemini",
+    "model_env_var": "GEMINI_MODEL",
+    "temperature": 0,
+    "deviation_policy": "none",
+    "bounded_deviation_pct": 0,
+    "max_retries": 2,
+    "timeout_seconds": 30
+  },
+  "kill_switch_1": {
+    "enabled": true,
+    "min_reviewed_decisions": 30,
+    "reversal_rate_threshold_pct": 10,
+    "operator": ">=",
+    "scope": "cumulative_since_go_live",
+    "reversal_definition": "any_change_to_action_or_quantity",
+    "exclude_ai_fallback_decisions": true,
+    "counts_only_reviewed_decisions": true,
+    "restart_count_on_rearm": true
+  },
+  "kill_switch_2": {
+    "enabled": true,
+    "alert_above_rupees": 2800000,
+    "kill_above_rupees": 3400000,
+    "period": "calendar_quarter",
+    "quarter_start_month": 1,
+    "evaluation": "quarter_to_date_sum"
+  },
+  "baseline_per_quarter_rupees": {
+    "stockout_low": 1800000,
+    "stockout_high": 2200000,
+    "overstock_low": 1000000,
+    "overstock_high": 1200000,
+    "total_low": 2800000,
+    "total_high": 3400000
+  },
+  "data_guardrails": {
+    "min_weeks_of_sales_required": 12,
+    "max_inventory_age_days": 7,
+    "block_run_on_validation_error": true
+  },
+  "timezone": "Asia/Kolkata"
+}
