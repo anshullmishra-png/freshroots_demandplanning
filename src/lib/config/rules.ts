@@ -32,6 +32,10 @@ export interface RulesConfig {
     bounded_deviation_pct: number;
     max_retries: number;
     timeout_seconds: number;
+    concurrency: number;
+    retry_delay_ms: number;
+    /** Warn Raghav and Deepa when more than this share of a run's decisions are fallbacks. */
+    fallback_warning_pct: number;
   };
   kill_switch_1: {
     enabled: boolean;

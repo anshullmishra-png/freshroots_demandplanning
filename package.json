@@ -13,9 +13,12 @@
     "secret-scan": "node scripts/secret-scan.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "check-bundle": "node scripts/check-bundle-secrets.mjs",
+    "ai:smoke": "tsx scripts/ai-smoke.ts"
   },
   "dependencies": {
+    "@google/genai": "^2.30.0",
     "@neondatabase/serverless": "^1.2.0",
     "drizzle-orm": "^0.45.4",
     "next": "16.4.2",

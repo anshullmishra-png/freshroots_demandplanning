@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { loadRules } from "@/lib/config/rules";
 import { runSeed } from "../helpers/synth";
 import { withRules } from "../helpers/seed";
 
@@ -60,7 +61,7 @@ describe("A. golden test: seed data, default config (docs/10-TEST-PLAN.md)", () 
   });
 
   it("stamps the rules version", () => {
-    expect(result.rules_version).toBe("1.2.0");
+    expect(result.rules_version).toBe(loadRules().version);
   });
 });
 
