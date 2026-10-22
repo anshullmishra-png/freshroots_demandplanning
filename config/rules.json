@@ -1,5 +1,5 @@
 {
-  "version": "1.1.1",
+  "version": "1.2.0",
   "_note": "Every threshold in the system lives here. Values marked DEFAULT are pending user confirmation, see docs/12-OPEN-QUESTIONS.md.",
   "rules": {
     "recent_window_weeks": 4,
@@ -19,7 +19,10 @@
       "max_cover_weeks": 4
     },
     "stockout_reorder_multiplier": 1.0,
-    "combined_flag_multiplier_policy": "highest"
+    "combined_flag_multiplier_policy": "highest",
+    "needs_judgment": {
+      "week_on_week_swing_pct": 50
+    }
   },
   "ai": {
     "provider": "gemini",
