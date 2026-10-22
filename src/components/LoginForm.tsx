@@ -4,8 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { btnPrimary, inputClass } from "@/components/ui";
 
+/**
+ * The fields have no `name` and the form posts, never gets: if someone submits before this page's JavaScript has
+ * loaded, the browser sends nothing. A password must never end up in the address bar or browser history.
+ */
 export function LoginForm() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -13,12 +19,11 @@ export function LoginForm() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const form = new FormData(e.currentTarget);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: form.get("email"), password: form.get("password") }),
+        body: JSON.stringify({ email, password }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -35,14 +40,30 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+    <form method="post" onSubmit={submit} className="flex flex-col gap-4" noValidate>
       <label className="flex flex-col gap-1 text-sm font-semibold text-sapphire">
         Email
-        <input name="email" type="email" autoComplete="username" required className={inputClass} />
+        <input
+          id="email"
+          type="email"
+          autoComplete="username"
+          required
+          className={inputClass}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
       </label>
       <label className="flex flex-col gap-1 text-sm font-semibold text-sapphire">
         Password
-        <input name="password" type="password" autoComplete="current-password" required className={inputClass} />
+        <input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          className={inputClass}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
       </label>
       {error && (
         <p role="alert" className="rounded-btn bg-dangermutedbg px-3 py-2 text-sm font-semibold text-dangermuted">

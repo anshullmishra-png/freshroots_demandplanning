@@ -12,7 +12,16 @@ export interface Ctx {
 }
 export type RouteParams = { params: Promise<Record<string, string>> };
 
+/**
+ * Next.js and React use thrown values for control flow (a route being dynamic, redirects, postponing a render).
+ * They carry a `digest` or a React `$$typeof` marker and must reach the framework, never become a 500.
+ */
+function isFrameworkSignal(e: unknown): boolean {
+  return typeof e === "object" && e !== null && ("digest" in e || "$$typeof" in e);
+}
+
 export function errorResponse(e: unknown): Response {
+  if (isFrameworkSignal(e)) throw e;
   if (e instanceof AppError) {
     return Response.json({ error: { code: e.code, message: e.message, details: e.details } }, { status: e.status });
   }
