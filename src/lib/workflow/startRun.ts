@@ -7,6 +7,7 @@ import type { RulesConfig } from "@/lib/config/rules";
 import { AppError } from "@/lib/errors";
 import { validateUpload } from "@/lib/validation/validate";
 import { FILE_KEYS, type FileKey, type UploadFiles, type ValidationResult } from "@/lib/validation/types";
+import { assertAutomationRunning } from "@/lib/kill/service";
 import { writeAudit } from "./audit";
 import { createRun, type CreatedRun } from "./runs";
 
@@ -36,6 +37,7 @@ export async function startRun(
 ): Promise<CreatedRun & { snapshotId: number; warnings: number }> {
   assertCan(actor.role, "start_run");
   assertCan(actor.role, "upload_data");
+  await assertAutomationRunning(db); // a stopped system takes no new runs (G-K2)
 
   const result = validateFiles(input.files, input.rules, input.now);
   if (!result.ok) {

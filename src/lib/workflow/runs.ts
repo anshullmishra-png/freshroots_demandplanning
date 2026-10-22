@@ -10,6 +10,7 @@ import { runRuleEngine } from "@/lib/rules/engine";
 import type { RunResult } from "@/lib/rules/types";
 import { validateUpload } from "@/lib/validation/validate";
 import type { FileKey, ValidatedData } from "@/lib/validation/types";
+import { assertAutomationRunning, killStateLabel } from "@/lib/kill/service";
 import { writeAudit } from "./audit";
 
 /**
@@ -58,6 +59,8 @@ export async function createRun(
   },
 ): Promise<CreatedRun> {
   const { snapshotId, createdBy, rules, client, model, prompts } = args;
+  await assertAutomationRunning(db); // the AI step never runs while a kill is active (G-K2)
+  const killStateAtRun = await killStateLabel(db);
   const { data } = await loadSnapshotData(db, snapshotId, rules);
   const result: RunResult = runRuleEngine(data, rules);
 
@@ -71,6 +74,7 @@ export async function createRun(
         rulesVersion: rules.version,
         rulesJson: rules,
         status: "flagged",
+        killStateAtRun,
         summaryJson: {
           as_of_date: result.as_of_date,
           last_complete_week: result.last_complete_week,

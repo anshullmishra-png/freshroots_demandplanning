@@ -18,11 +18,18 @@ describe("forms never put sensitive values in the URL", () => {
     expect(text).not.toMatch(/FormData\(/);
   });
 
-  it("no form in the app can fall back to a GET submission", () => {
+  it("no form in the app can fall back to a GET submission, except a marked filter form", () => {
     for (const f of sourceFiles) {
       const text = readFileSync(f, "utf8");
       for (const tag of text.match(/<form\b[^>]*>/g) ?? []) {
-        expect(tag, `${path.relative(root, f)}: ${tag}`).toMatch(/method="post"/);
+        const rel = path.relative(root, f);
+        if (/method="get"/.test(tag)) {
+          // A search filter may use GET, but it must say so on purpose and may carry no secret.
+          expect(tag, `${rel}: ${tag}`).toMatch(/data-get-safe="filters only"/);
+          expect(text, `${rel}: a GET form must not contain a password field`).not.toMatch(/type="password"/);
+        } else {
+          expect(tag, `${rel}: ${tag}`).toMatch(/method="post"/);
+        }
       }
     }
   });

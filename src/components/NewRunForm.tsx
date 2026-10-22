@@ -32,7 +32,7 @@ interface Report {
 
 const STEPS = ["Upload", "Validate", "Forecast and flag", "AI decisions", "Review", "Buying decision"];
 
-export function NewRunForm() {
+export function NewRunForm({ blockedReason = null }: { blockedReason?: string | null }) {
   const router = useRouter();
   const [files, setFiles] = useState<Partial<Record<FileKey, File>>>({});
   const [usePrevious, setUsePrevious] = useState(false);
@@ -42,6 +42,7 @@ export function NewRunForm() {
   const [error, setError] = useState<string | null>(null);
 
   const required = SLOTS.filter((s) => !(usePrevious && s.master));
+  const blocked = blockedReason !== null;
   const haveAll = required.every((s) => files[s.key]);
 
   function build(extra: Record<string, string> = {}) {
@@ -100,7 +101,7 @@ export function NewRunForm() {
   }
 
   const hasWarnings = (report?.warnings.length ?? 0) > 0;
-  const canStart = !!report?.ok && (!hasWarnings || acknowledged) && busy === null;
+  const canStart = !blocked && !!report?.ok && (!hasWarnings || acknowledged) && busy === null;
   const step = busy === "run" ? 2 : report?.ok ? 2 : haveAll ? 1 : 0;
 
   return (
@@ -110,6 +111,12 @@ export function NewRunForm() {
           <Label>New run</Label>
           <h1 className="text-[32px] font-bold leading-tight text-sapphire">Upload this week&apos;s SAP files</h1>
         </div>
+
+        {blockedReason && (
+          <p role="alert" className="rounded-btn bg-dangermutedbg px-4 py-3 text-sm font-semibold text-dangermuted">
+            {blockedReason}
+          </p>
+        )}
 
         <Card>
           <CardHeader title="Files" />
@@ -154,7 +161,7 @@ export function NewRunForm() {
             })}
           </ul>
           <div className="mt-4 flex flex-wrap gap-3">
-            <button type="button" className={btnSecondary} disabled={!haveAll || busy !== null} onClick={validate}>
+            <button type="button" className={btnSecondary} disabled={blocked || !haveAll || busy !== null} onClick={validate}>
               {busy === "validate" ? "Checking..." : "Check files"}
             </button>
           </div>

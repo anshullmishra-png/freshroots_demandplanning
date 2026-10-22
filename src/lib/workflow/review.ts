@@ -5,6 +5,8 @@ import { assertCan, isBreakGlass } from "@/lib/auth/permissions";
 import type { SessionUser } from "@/lib/auth/session";
 import { badRequest, conflict, notFound } from "@/lib/errors";
 import { FINAL_ACTIONS, FLAG_TYPES, REASON_CODES, type FinalAction, type ReasonCode } from "@/lib/review-shared";
+import { deliverAfterCommit } from "@/lib/email";
+import { evaluateKill1AndAct } from "@/lib/kill/service";
 import { writeAudit, writeAuditMany } from "./audit";
 
 export { FLAG_TYPES, FINAL_ACTIONS, REASON_CODES };
@@ -90,6 +92,8 @@ export interface ReviewResult {
   finalQty: number;
   runId: number;
   runCompleted: boolean;
+  /** This review made a kill switch fire. Everything unreviewed was voided and unplaced orders were held. */
+  kill1Fired?: boolean;
 }
 
 /**
@@ -99,7 +103,14 @@ export interface ReviewResult {
  */
 export async function reviewDecision(db: AnyDb, actor: SessionUser, request: ReviewRequest): Promise<ReviewResult> {
   assertCan(actor.role, "review");
-  return db.transaction((tx) => applyReview(tx, actor, request));
+  // Kill 1 is checked in the same transaction as the review, so the count it sees includes this review (G-K1).
+  const result = await db.transaction(async (tx) => {
+    const reviewed = await applyReview(tx, actor, request);
+    const kill = await evaluateKill1AndAct(tx);
+    return { ...reviewed, kill1Fired: kill.fired };
+  });
+  if (result.kill1Fired) await deliverAfterCommit(db);
+  return result;
 }
 
 async function applyReview(tx: AnyDb, actor: SessionUser, request: ReviewRequest): Promise<ReviewResult> {
@@ -222,7 +233,7 @@ export async function bulkAccept(db: AnyDb, actor: SessionUser, aiDecisionIds: u
   }
   const ids = [...new Set(aiDecisionIds as number[])];
 
-  return db.transaction(async (tx) => {
+  const results = await db.transaction(async (tx) => {
     const found = await tx
       .select({
         id: aiDecisions.id,
@@ -249,8 +260,13 @@ export async function bulkAccept(db: AnyDb, actor: SessionUser, aiDecisionIds: u
         ineligible.map((f) => ({ aiDecisionId: f.id, sku: f.skuId, needsJudgment: f.needsJudgment, isFallback: f.isFallback })),
       );
     }
-    return applyAcceptBatch(tx, actor, ids);
+    const accepted = await applyAcceptBatch(tx, actor, ids);
+    // Accepting raises the number reviewed, which can lift a run past the minimum sample, so check once at the end.
+    const kill = await evaluateKill1AndAct(tx);
+    return accepted.map((r) => ({ ...r, kill1Fired: kill.fired }));
   });
+  if (results.some((r) => r.kill1Fired)) await deliverAfterCommit(db);
+  return results;
 }
 
 /**

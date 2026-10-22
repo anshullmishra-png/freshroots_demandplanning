@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { NavLinks } from "@/components/NavLinks";
 import { SignOutButton } from "@/components/SignOutButton";
+import { StatusBanner } from "@/components/StatusBanner";
 import { PageContainer } from "@/components/ui";
 import { navFor, type Permission } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/server";
@@ -36,6 +37,9 @@ export function Shell({ user, children }: { user: SessionUser; children: ReactNo
           <SignOutButton />
         </div>
       </header>
+      <Suspense fallback={null}>
+        <StatusBanner role={user.role} />
+      </Suspense>
       <PageContainer>{children}</PageContainer>
     </div>
   );

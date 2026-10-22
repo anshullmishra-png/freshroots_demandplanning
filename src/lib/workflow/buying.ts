@@ -1,13 +1,57 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { buyingDecisions } from "@/db/schema";
 import type { AnyDb } from "@/db/snapshots";
 import { assertCan } from "@/lib/auth/permissions";
 import type { SessionUser } from "@/lib/auth/session";
 import { badRequest, conflict, notFound } from "@/lib/errors";
-import { writeAudit } from "./audit";
+import { writeAudit, writeAuditMany } from "./audit";
 import { FINAL_ACTIONS, assertQuantityMatchesAction } from "./review";
 
 export const MIN_AMEND_REASON = 10;
+
+/**
+ * "Confirm with Raghav before ordering": after a kill, held orders stay held until Raghav confirms each one, in
+ * writing. Releasing puts them back to pending so procurement can place them. Nothing is cancelled, and the release is
+ * audited with the reason (open question 39).
+ */
+export async function releaseHeld(db: AnyDb, actor: SessionUser, ids: unknown, reason: unknown): Promise<{ released: number }> {
+  assertCan(actor.role, "review");
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 500 || ids.some((i) => typeof i !== "number" || !Number.isInteger(i) || i <= 0)) {
+    throw badRequest("BAD_IDS", "Send between 1 and 500 order ids, each a positive whole number.");
+  }
+  const why = typeof reason === "string" ? reason.trim() : "";
+  if (why.length < MIN_AMEND_REASON) throw badRequest("REASON_REQUIRED", `Write a reason of at least ${MIN_AMEND_REASON} characters.`);
+  const unique = [...new Set(ids as number[])];
+
+  return db.transaction(async (tx) => {
+    const found = await tx
+      .select({ id: buyingDecisions.id, skuId: buyingDecisions.skuId, status: buyingDecisions.status })
+      .from(buyingDecisions)
+      .where(inArray(buyingDecisions.id, unique));
+    const missing = unique.filter((i) => !found.some((f) => f.id === i));
+    if (missing.length) throw notFound(`Orders not found: ${missing.join(", ")}.`);
+    const notHeld = found.filter((f) => f.status !== "held");
+    if (notHeld.length) throw conflict("NOT_HELD", `Not held: ${notHeld.map((f) => f.skuId).join(", ")}.`);
+    const released = await tx
+      .update(buyingDecisions)
+      .set({ status: "pending" })
+      .where(and(inArray(buyingDecisions.id, unique), eq(buyingDecisions.status, "held")))
+      .returning({ id: buyingDecisions.id });
+    if (released.length !== unique.length) throw conflict("NOT_HELD", "Some orders changed while you were working. Reload and try again.");
+    await writeAuditMany(
+      tx,
+      released.map((r) => ({
+        actorId: actor.id,
+        action: "buying_decision.released",
+        entity: "buying_decision",
+        entityId: r.id,
+        before: { status: "held" },
+        after: { status: "pending", reason: why },
+      })),
+    );
+    return { released: released.length };
+  });
+}
 
 /**
  * A change after review. The review row itself is never edited (it is append-only in the database); the

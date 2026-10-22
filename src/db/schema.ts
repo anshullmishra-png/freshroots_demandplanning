@@ -1,7 +1,9 @@
 // Database schema (Drizzle / Neon Postgres), per docs/03-DATA-SPEC.md.
 // Kill-switch and loss tables are added in Phase 6, each phase with its own migration.
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   date,
   index,
   integer,
@@ -10,8 +12,10 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
 
 export const userRole = pgEnum("user_role", ["raghav", "procurement", "priya", "deepa", "ceo", "admin"]);
@@ -33,6 +37,10 @@ export const reasonCode = pgEnum("reason_code", [
 ]);
 export const buyingStatus = pgEnum("buying_status", ["pending", "placed", "held", "cancelled"]);
 export const orderSink = pgEnum("order_sink", ["csv", "zoho"]);
+export const kill1State = pgEnum("kill1_state", ["armed", "killed"]);
+export const kill2State = pgEnum("kill2_state", ["green", "alert", "killed"]);
+export const killEventType = pgEnum("kill_event_type", ["alert", "killed", "rearmed"]);
+export const emailStatus = pgEnum("email_status", ["queued", "sent", "failed"]);
 
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -234,4 +242,67 @@ export const auditLog = pgTable("audit_log", {
   beforeJson: jsonb("before_json"),
   afterJson: jsonb("after_json"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+const rupees = (name: string) => numeric(name, { precision: 14, scale: 2, mode: "number" });
+
+// Priya's figures, in rupees (docs/09). The app never computes them. Each period sits inside one calendar quarter.
+export const lossEntries = pgTable(
+  "loss_entries",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    periodStart: date("period_start", { mode: "string" }).notNull(),
+    periodEnd: date("period_end", { mode: "string" }).notNull(),
+    stockoutLossRupees: rupees("stockout_loss_rupees").notNull(),
+    overstockWriteoffRupees: rupees("overstock_writeoff_rupees").notNull(),
+    enteredBy: integer("entered_by")
+      .notNull()
+      .references(() => users.id),
+    enteredAt: timestamp("entered_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedBy: integer("updated_by").references(() => users.id),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+    note: text("note"),
+  },
+  (t) => [unique("loss_entries_period_unique").on(t.periodStart, t.periodEnd)],
+);
+
+// One row only. Kill 1 and Kill 2 state, and when Kill 1 started counting.
+export const killState = pgTable(
+  "kill_state",
+  {
+    id: integer("id").primaryKey().default(1),
+    kill1State: kill1State("kill1_state").notNull().default("armed"),
+    kill2State: kill2State("kill2_state").notNull().default("green"),
+    kill1EpochStart: timestamp("kill1_epoch_start", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("kill_state_single_row", sql`${t.id} = 1`)],
+);
+
+// Append-only. A trigger allows one thing only: recording the first acknowledgement (guardrail G-K4).
+export const killEvents = pgTable("kill_events", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  killSwitch: smallint("switch").notNull(),
+  event: killEventType("event").notNull(),
+  metricValue: numeric("metric_value", { precision: 16, scale: 4, mode: "number" }).notNull(),
+  threshold: numeric("threshold", { precision: 16, scale: 4, mode: "number" }).notNull(),
+  detailsJson: jsonb("details_json").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  acknowledgedBy: integer("acknowledged_by").references(() => users.id),
+  acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
+});
+
+// Alert and kill emails, queued in the same transaction as the event that caused them, then delivered.
+export const emailOutbox = pgTable("email_outbox", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  toEmail: text("to_email").notNull(),
+  toName: text("to_name").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  kind: text("kind").notNull(),
+  killEventId: integer("kill_event_id").references(() => killEvents.id),
+  status: emailStatus("status").notNull().default("queued"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  error: text("error"),
 });
