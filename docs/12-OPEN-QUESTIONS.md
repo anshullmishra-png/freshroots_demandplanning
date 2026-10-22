@@ -25,7 +25,7 @@ Priority A = changes flags or kill behaviour; confirm first. B = changes behavio
 | 17 | B | Which days are the two weekly data pulls? | Not enforced. No scheduling in the app (the trigger is manual) | 01, 07 |
 | 18 | B | Success target beyond staying under the baseline (for example a % reduction)? | None set. States are only green, alert, killed | 09 |
 | 19 | B | Users and roles: who exactly has an account, and sign-in method | Seed one user per role (raghav, procurement, priya, deepa, ceo) plus admin; email + password; names and emails to be provided | 07, 11 |
-| 20 | C | Gemini model ID | From `GEMINI_MODEL`; Claude Code verifies the current ID in Google's docs and tells the user | 04, 11 |
+| 20 | C | Gemini model ID | From `GEMINI_MODEL`; Claude Code verifies the current ID in Google's docs and tells the user. **Verified 2026-10-22: `gemini-3.5-flash-lite`** (stable, recommended by Google for new projects, cheapest; 7 of 7 seed flags valid first try). Fallback choice if quality drops: `gemini-3.8-flash` | 04, 11 |
 | 21 | C | Zoho Inventory: which module, when | Draft purchase orders only, built after the user provides credentials. First release exports CSV | 11 |
 | 22 | C | Spot-check of unflagged SKUs to guard against automation bias (used in the course's hiring example) | **Off.** Not on the approved component map | 05 |
 | 23 | C | Real scale: 400 SKUs and 1,200 distributors versus the 15-SKU seed. Sales are SKU-level in the seed | Build for 400 SKUs; forecasting stays SKU-level in the first release | 03 |
