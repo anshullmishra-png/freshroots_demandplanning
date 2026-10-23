@@ -47,10 +47,10 @@ async function main() {
     `SELECT d.id, d.action::text AS action, d.quantity, f.flag_types, f.standard_qty FROM ai_decisions d JOIN flags f ON f.id = d.flag_id WHERE f.run_id = ${Number(run.runId)} ORDER BY d.id`,
   );
   if (!rows) throw new Error("The stage script needs database access (E2E_DATABASE_URL or DATABASE_URL) to read the decisions.");
-  // Change the first two, accept the rest: a realistic week, and well under the 10% line that would stop the AI.
+  // Change the first one, accept the rest: a realistic week where the AI is overruled rarely.
   let changed = 0;
   for (const [i, d] of rows.entries()) {
-    if (i < 2) {
+    if (i < 1) {
       const reorder = d.action === "REORDER";
       await call(raghav, "/api/reviews", {
         method: "POST",

@@ -81,6 +81,9 @@ const KILL2_PILL: Record<"green" | "alert" | "killed", { tone: PillTone; text: s
   killed: { tone: "danger", text: "Stopped" },
 };
 
+/** Hours as people say them: a same-minute demo should not read "0 h". */
+const hours = (h: number) => (h < 1 ? "under 1 hour" : h === 1 ? "1 hour" : `${h} hours`);
+
 const dayLabel = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 
 export function DashboardView({ data, canExport }: { data: DashboardData; canExport: boolean }) {
@@ -293,7 +296,7 @@ export function DashboardView({ data, canExport }: { data: DashboardData; canExp
                   <span className="text-sapphire">{r.accepted} accepted</span>
                   <span className="text-sapphire">{r.rejected} rejected</span>
                   <span className={cx(r.fallback > 0 ? "text-sapphire" : "text-mutedtext")}>{r.fallback} fallback</span>
-                  <span className="text-mutedtext">{r.turnaroundHours === null ? "not reviewed" : `${r.turnaroundHours} h`}</span>
+                  <span className="text-mutedtext">{r.turnaroundHours === null ? "not reviewed" : hours(r.turnaroundHours)}</span>
                   <Pill tone={r.status === "completed" ? "success" : r.status === "blocked" ? "danger" : "quoted"}>{r.status.replace("_", " ")}</Pill>
                 </li>
               ))}
@@ -312,7 +315,7 @@ export function DashboardView({ data, canExport }: { data: DashboardData; canExp
           </div>
           <div className="py-3 md:px-4">
             <dt className="text-mutedtext">Time from review to order placed</dt>
-            <dd className="mt-1 text-2xl font-bold text-sapphire">{workflow.avgOrderLagHours === null ? "No orders yet" : `${workflow.avgOrderLagHours} hours`}</dd>
+            <dd className="mt-1 text-2xl font-bold text-sapphire">{workflow.avgOrderLagHours === null ? "No orders yet" : hours(workflow.avgOrderLagHours)}</dd>
           </div>
           <div className="py-3 md:px-4">
             <dt className="text-mutedtext">Needs-judgment share of decisions</dt>

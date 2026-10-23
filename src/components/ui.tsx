@@ -21,7 +21,7 @@ const PILL: Record<PillTone, string> = {
 
 export function Pill({ tone, children }: { tone: PillTone; children: ReactNode }) {
   return (
-    <span className={cx("inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em]", PILL[tone])}>
+    <span className={cx("inline-flex items-center whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em]", PILL[tone])}>
       {children}
     </span>
   );

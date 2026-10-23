@@ -30,7 +30,8 @@ async function placeOrders(ids: number[], orderReference: string): Promise<void>
 
 export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; canPlace: boolean; canExport: boolean }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<Filter>("pending");
+  // Open on the first tab that has something in it: work to do, then held, then what was placed.
+  const [filter, setFilter] = useState<Filter>(data.counts.pending > 0 ? "pending" : data.counts.held > 0 ? "held" : data.counts.placed > 0 ? "placed" : "pending");
   const [selected, setSelected] = useState<number[]>([]);
   const [sharedRef, setSharedRef] = useState("");
   const [busy, setBusy] = useState<number | "bulk" | null>(null);

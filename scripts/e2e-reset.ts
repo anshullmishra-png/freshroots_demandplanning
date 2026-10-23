@@ -54,8 +54,8 @@ async function main() {
       const passwordHash = await hashPassword(password);
       await db
         .insert(users)
-        .values({ name: `E2E ${role}`, email, role, passwordHash })
-        .onConflictDoUpdate({ target: users.email, set: { passwordHash, active: true, role } });
+        .values({ name: `${role === "ceo" ? "CEO" : role[0].toUpperCase() + role.slice(1)} Demo`, email, role, passwordHash })
+        .onConflictDoUpdate({ target: users.email, set: { name: `${role === "ceo" ? "CEO" : role[0].toUpperCase() + role.slice(1)} Demo`, passwordHash, active: true, role } });
       creds[role] = { email, password };
     }
     writeFileSync(".e2e-credentials.local.json", JSON.stringify(creds, null, 2));
