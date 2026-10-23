@@ -24,7 +24,7 @@ export function KillView({ status, events, canAcknowledge, week }: { status: Kil
       <div className="grid gap-8 lg:grid-cols-2">
         <Card>
           <div className="flex items-start justify-between gap-2">
-            <h2 className="text-2xl font-semibold text-sapphire">Kill 1: reversal monitor</h2>
+            <h2 className="text-2xl font-semibold text-sapphire">AI trust check (Kill 1)</h2>
             <Pill tone={kill1.state === "killed" ? "danger" : "success"}>{kill1.state === "killed" ? "Killed" : "Armed"}</Pill>
           </div>
           <p className="mt-2 text-sm text-sapphire">
@@ -42,7 +42,7 @@ export function KillView({ status, events, canAcknowledge, week }: { status: Kil
 
         <Card>
           <div className="flex items-start justify-between gap-2">
-            <h2 className="text-2xl font-semibold text-sapphire">Kill 2: outcome gate</h2>
+            <h2 className="text-2xl font-semibold text-sapphire">Loss limit (Kill 2)</h2>
             <Pill tone={kill2.state === "killed" ? "danger" : kill2.state === "alert" ? "active" : "success"}>
               {kill2.state === "killed" ? "Killed" : kill2.state === "alert" ? "Alert" : "Green"}
             </Pill>

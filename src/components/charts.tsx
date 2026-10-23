@@ -179,8 +179,8 @@ export function HBars({ items, format = (n: number) => String(n) }: { items: Arr
 
 export function ChartCard({ title, hint, children }: { title: string; hint?: ReactNode; children: ReactNode }) {
   return (
-    <section className="rounded-card border border-border bg-surface p-6 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-      <h3 className="text-xl font-semibold text-sapphire">{title}</h3>
+    <section className="rounded-card border border-border bg-surface p-6 shadow-[0_1px_2px_rgba(0,45,114,0.05),0_10px_28px_-16px_rgba(0,45,114,0.18)]">
+      <h3 className="text-lg font-semibold text-sapphire">{title}</h3>
       {hint && <p className="mb-4 mt-1 text-sm text-mutedtext">{hint}</p>}
       {children}
     </section>

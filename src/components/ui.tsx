@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 // Small building blocks from docs/08-UI-DESIGN-SYSTEM.md. No hooks, so these work in server and client components.
@@ -34,7 +35,7 @@ export function flagTone(flag: string): PillTone {
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <section className={cx("rounded-card border border-border bg-surface p-6 shadow-[0_1px_2px_rgba(0,0,0,0.05)]", className)}>
+    <section className={cx("rounded-card border border-border bg-surface p-6 shadow-[0_1px_2px_rgba(0,45,114,0.05),0_10px_28px_-16px_rgba(0,45,114,0.18)]", className)}>
       {children}
     </section>
   );
@@ -43,9 +44,44 @@ export function Card({ children, className }: { children: ReactNode; className?:
 export function CardHeader({ title, action }: { title: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <h2 className="text-2xl font-semibold text-sapphire">{title}</h2>
+      <h2 className="text-lg font-semibold text-sapphire">{title}</h2>
       {action}
     </div>
+  );
+}
+
+/** The top of every page: a small label, the title, one plain sentence, and the page's actions on the right. */
+export function PageHeader({ eyebrow, title, subtitle, actions }: { eyebrow?: string; title: string; subtitle?: ReactNode; actions?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="min-w-0">
+        {eyebrow && <Label>{eyebrow}</Label>}
+        <h1 className="text-[28px] font-bold leading-tight tracking-tight text-sapphire md:text-[32px]">{title}</h1>
+        {subtitle && <p className="mt-1 max-w-2xl text-sm leading-6 text-mutedtext">{subtitle}</p>}
+      </div>
+      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+    </div>
+  );
+}
+
+/** A bar for "how far along": always has text beside it, so the colour is never the only signal. */
+export function ProgressBar({ value, max, label, tone = "sapphire" }: { value: number; max: number; label: string; tone?: "sapphire" | "emerald" | "gold" }) {
+  const pct = max <= 0 ? 0 : Math.min(100, Math.round((value / max) * 100));
+  const fill = tone === "emerald" ? "bg-emerald" : tone === "gold" ? "bg-gold" : "bg-sapphire";
+  return (
+    <div role="img" aria-label={`${label}: ${value} of ${max}`} className="h-2 w-full overflow-hidden rounded-full bg-track/40">
+      <div className={cx("h-full rounded-full", fill)} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+/** A round icon badge used at the top of tiles and empty states. Decorative: the words next to it carry the meaning. */
+export function IconBadge({ icon: Icon, tone = "sapphire" }: { icon: LucideIcon; tone?: "sapphire" | "gold" | "emerald" }) {
+  const t = tone === "gold" ? "bg-gold/20 text-sapphire" : tone === "emerald" ? "bg-emerald/15 text-sapphire" : "bg-sapphire/10 text-sapphire";
+  return (
+    <span className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", t)} aria-hidden="true">
+      <Icon size={20} />
+    </span>
   );
 }
 
@@ -73,12 +109,13 @@ export function PageContainer({ children }: { children: ReactNode }) {
 export const linkClass = "font-semibold text-royaltext underline underline-offset-2";
 
 /** What to do next, when a list has nothing in it (docs/07: every list has an empty state). */
-export function EmptyState({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
+export function EmptyState({ title, children, action, icon }: { title: string; children?: ReactNode; action?: ReactNode; icon?: LucideIcon }) {
   return (
-    <Card>
-      <h2 className="text-2xl font-semibold text-sapphire">{title}</h2>
-      {children && <p className="mt-2 text-mutedtext">{children}</p>}
-      {action && <div className="mt-4">{action}</div>}
+    <Card className="flex flex-col items-start gap-3">
+      {icon && <IconBadge icon={icon} />}
+      <h2 className="text-lg font-semibold text-sapphire">{title}</h2>
+      {children && <p className="max-w-xl text-mutedtext">{children}</p>}
+      {action && <div className="mt-1">{action}</div>}
     </Card>
   );
 }

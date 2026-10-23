@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, CheckCircle2, FileSpreadsheet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent } from "react";
-import { Card, CardHeader, Label, btnPrimary, btnSecondary, cx } from "@/components/ui";
+import { Card, CardHeader, IconBadge, PageHeader, btnPrimary, btnSecondary, cx } from "@/components/ui";
 import { continueUntilDone } from "@/lib/continue-client";
 
 type FileKey = "sales" | "inventory" | "sku_master" | "distributor_master" | "calendar";
@@ -122,10 +122,11 @@ export function NewRunForm({ blockedReason = null }: { blockedReason?: string | 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
       <div className="flex flex-col gap-8">
-        <div>
-          <Label>New run</Label>
-          <h1 className="text-[32px] font-bold leading-tight text-sapphire">Upload this week&apos;s SAP files</h1>
-        </div>
+        <PageHeader
+          eyebrow="New run"
+          title="Upload this week's SAP files"
+          subtitle="Five CSV files from SAP. They are checked first; nothing runs, and nothing is ordered, until you press Start run."
+        />
 
         {blockedReason && (
           <p role="alert" className="rounded-btn bg-dangermutedbg px-4 py-3 text-sm font-semibold text-dangermuted">
@@ -153,15 +154,18 @@ export function NewRunForm({ blockedReason = null }: { blockedReason?: string | 
               const f = files[s.key];
               return (
                 <li key={s.key} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                  <div>
-                    <p className="text-sm font-bold text-sapphire">{s.label}</p>
-                    <p className="text-xs text-mutedtext">
-                      {skipped
-                        ? "Using the previous upload"
-                        : f
-                          ? `${f.name} · ${(f.size / 1024).toFixed(1)} KB${report?.fileStats[s.key] != null ? ` · ${report.fileStats[s.key]} rows` : ""}`
-                          : `Expected ${s.name}`}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <IconBadge icon={f || skipped ? CheckCircle2 : FileSpreadsheet} tone={f || skipped ? "emerald" : "sapphire"} />
+                    <div>
+                      <p className="text-sm font-bold text-sapphire">{s.label}</p>
+                      <p className="text-xs text-mutedtext">
+                        {skipped
+                          ? "Using the previous upload"
+                          : f
+                            ? `${f.name} · ${(f.size / 1024).toFixed(1)} KB${report?.fileStats[s.key] != null ? ` · ${report.fileStats[s.key]} rows` : ""}`
+                            : `Expected ${s.name}`}
+                      </p>
+                    </div>
                   </div>
                   <input
                     type="file"
