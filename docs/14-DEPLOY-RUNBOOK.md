@@ -44,6 +44,7 @@ Set in Vercel per environment (`vercel env add NAME production|preview`, value f
 | `APP_URL` | the preview address | the https address people use | alert emails link to it |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | yes | yes | model checked against Google's docs before first use (Q20) |
 | `AI_CLIENT` | `mock` while testing, then unset | **never set** | production refuses it |
+| `DEMO_OPEN_ACCESS` | `1` on the shared demo preview | **never set** (ignored, and flagged as a problem by the deep health check) | sign in with no password as a test role, see Q58 |
 | `AI_MOCK_DELAY_MS`, `AI_STEP_BUDGET_SECONDS` | `700` and `0.5` while testing the mock, then unset | never set | test hooks that make a run need two requests, so the browser's "carry on" loop is exercised. They only act on the mock |
 | `EMAIL_PROVIDER` | `console` | `console` until Q13 | `/api/health/deep` warns while it is `console` |
 
