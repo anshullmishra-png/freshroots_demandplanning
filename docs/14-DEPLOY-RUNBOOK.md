@@ -70,6 +70,12 @@ Set in Vercel per environment (`vercel env add NAME production|preview`, value f
 - One run with real Gemini from Vercel: 7 flags, 7 decisions in 5 s, 0 fallbacks (`npm run smoke:preview`). The preview currently has the real AI. To repeat the end-to-end test, first add the three test hooks (section 3) to the preview, redeploy, and remove them again afterwards.
 - Bug found only on the live site: with a short budget, each "carry on" request spent it all on database round trips from the US and finished nothing. Every request now always does at least one batch, and the browser stops and says so if three requests in a row make no progress.
 
+### Status of the databases (2026-10-23)
+Neon project `freshroots_demandplanning` (Singapore, `aws-ap-southeast-1`) has two branches, each with its own endpoint:
+- `preview` (renamed from the default branch Neon had called `production`): throwaway. Test accounts and test runs. The e2e reset wipes it.
+- `production`: a separate root branch created schema-only, then reset and built by running all six migrations, so Drizzle's own record matches. It holds **no users and no data**; the only row is `kill_state` (both switches armed and green). Its connection strings are in the git-ignored `.production-urls.local.json` on the deploying machine and are **not yet in Vercel**.
+- Not yet done for production, on purpose: Vercel production variables, the six real accounts, the Kill 1 go-live reset, the first deploy. **Merging to `main` makes Vercel deploy production automatically** (the repo is connected), so the production variables are added only when the owner approves going live.
+
 ## 5. Before every run, every week
 
 - The inventory file must be 7 days old or less. The calendar file must contain the as-of month. The seed's calendar ends in 2026-12: upload a calendar that covers the next year before January.
