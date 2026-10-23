@@ -45,7 +45,12 @@ export async function seedTestUsers(db: AnyDb): Promise<TestUsers> {
 /** Clears everything a run creates. TRUNCATE is the one thing the append-only triggers do not (and should not) block. */
 export async function resetRunData(db: AnyDb): Promise<void> {
   await db.execute(
-    sql`TRUNCATE buying_decisions, reviews, ai_decisions, flags, runs, audit_log, weekly_sales, inventory, data_snapshots RESTART IDENTITY CASCADE`,
+    sql`TRUNCATE email_outbox, kill_events, loss_entries, buying_decisions, reviews, ai_decisions, flags, runs, audit_log, weekly_sales, inventory, data_snapshots RESTART IDENTITY CASCADE`,
+  );
+  // Back to a freshly deployed system: both switches armed and green, Kill 1 counting from now.
+  await db.execute(
+    sql`INSERT INTO kill_state (id, kill1_state, kill2_state, kill1_epoch_start) VALUES (1, 'armed', 'green', now())
+        ON CONFLICT (id) DO UPDATE SET kill1_state = 'armed', kill2_state = 'green', kill1_epoch_start = now(), updated_at = now()`,
   );
 }
 

@@ -6,6 +6,8 @@ import { Card, btnPrimary } from "@/components/ui";
 import { can } from "@/lib/auth/permissions";
 import { loadRules } from "@/lib/config/rules";
 import type { ReviewDataDto } from "@/lib/review-shared";
+import { HeldOrders } from "@/components/HeldOrders";
+import { getOrders } from "@/lib/workflow/orders";
 import { getReviewData, latestRunId } from "@/lib/workflow/review";
 
 export const metadata = { title: "Review | Freshroots Demand Planning" };
@@ -50,7 +52,17 @@ export default function ReviewPage({ searchParams }: { searchParams: Promise<{ r
           })),
           fallbackWarningPct: loadRules().ai.fallback_warning_pct,
         };
-        return <ReviewBoard data={dto} canReview={can(user.role, "review")} />;
+        const canReview = can(user.role, "review");
+        // After a kill, orders wait here for Raghav's written confirmation before procurement can place them.
+        const held = canReview ? (await getOrders(db, { status: "held" })).orders : [];
+        return (
+          <div className="flex flex-col gap-6">
+            {held.length > 0 && (
+              <HeldOrders orders={held.map((o) => ({ id: o.id, skuId: o.skuId, skuName: o.skuName, unit: o.unit, action: o.action, quantity: o.quantity, runId: o.runId }))} />
+            )}
+            <ReviewBoard data={dto} canReview={canReview} />
+          </div>
+        );
       }}
     />
   );
