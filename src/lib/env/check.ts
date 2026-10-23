@@ -50,6 +50,8 @@ export function checkEnvironment(env: Env = process.env): EnvReport {
   }
   if (production) {
     if (aiMode === "mock") problems.push(MOCK_AI_IN_PRODUCTION);
+    // Ignored by the code on production, but a leftover setting means the wrong environment was copied.
+    if (env.DEMO_OPEN_ACCESS) problems.push("DEMO_OPEN_ACCESS is set on a production deployment. It is for a throwaway preview only. Remove it.");
     if (!/^https:\/\//.test(env.APP_URL ?? "")) problems.push("APP_URL must be the https address people use, because alert emails link to it.");
     if (emailProvider === "console") warnings.push("EMAIL_PROVIDER is console: alert and kill emails are only written to the log and reach nobody.");
   }
