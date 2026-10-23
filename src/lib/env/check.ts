@@ -51,7 +51,14 @@ export function checkEnvironment(env: Env = process.env): EnvReport {
   if (production) {
     if (aiMode === "mock") problems.push(MOCK_AI_IN_PRODUCTION);
     // Ignored by the code on production, but a leftover setting means the wrong environment was copied.
-    if (env.DEMO_OPEN_ACCESS) problems.push("DEMO_OPEN_ACCESS is set on a production deployment. It is for a throwaway preview only. Remove it.");
+    if (env.DEMO_OPEN_ACCESS) {
+      if (env.ALLOW_OPEN_ACCESS_ON_PRODUCTION === "1") {
+        warnings.push("Open access is ON for this production deployment: anyone with the link can sign in as any role. Only for a deployment that holds test data.");
+      } else {
+        // Ignored by the code without the second switch, but a leftover setting means the wrong environment was copied.
+        problems.push("DEMO_OPEN_ACCESS is set on a production deployment without ALLOW_OPEN_ACCESS_ON_PRODUCTION. Remove it, or set both on purpose.");
+      }
+    }
     if (!/^https:\/\//.test(env.APP_URL ?? "")) problems.push("APP_URL must be the https address people use, because alert emails link to it.");
     if (emailProvider === "console") warnings.push("EMAIL_PROVIDER is console: alert and kill emails are only written to the log and reach nobody.");
   }

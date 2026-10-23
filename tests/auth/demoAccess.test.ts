@@ -98,6 +98,25 @@ describe("it can never work on production", () => {
     await expect(demoUser(db, "admin", { DEMO_OPEN_ACCESS: "1", VERCEL_ENV: "production" })).rejects.toMatchObject({ status: 404 });
   });
 
+  it("the second switch is the only thing that lets it work there, and both are needed", async () => {
+    const both = { DEMO_OPEN_ACCESS: "1", VERCEL_ENV: "production", ALLOW_OPEN_ACCESS_ON_PRODUCTION: "1" };
+    expect(demoEnabled(both)).toBe(true);
+    expect(demoEnabled({ ...both, DEMO_OPEN_ACCESS: undefined })).toBe(false); // the second switch alone opens nothing
+    expect(demoEnabled({ ...both, ALLOW_OPEN_ACCESS_ON_PRODUCTION: "true" })).toBe(false); // exactly "1"
+    expect(demoEnabled({ ...both, ALLOW_OPEN_ACCESS_ON_PRODUCTION: undefined })).toBe(false);
+    vi.stubEnv("DEMO_OPEN_ACCESS", "1");
+    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("ALLOW_OPEN_ACCESS_ON_PRODUCTION", "1");
+    expect((await call("admin")).status).toBe(303);
+  });
+
+  it("the deployment health check calls a leftover setting a problem, but only a warning when it is on purpose", () => {
+    const onPurpose = { VERCEL_ENV: "production", DATABASE_URL: "x", AUTH_SECRET: "a".repeat(40), CRON_SECRET: "c".repeat(20), APP_URL: "https://x.example", GEMINI_API_KEY: "x", GEMINI_MODEL: "x", DEMO_OPEN_ACCESS: "1", ALLOW_OPEN_ACCESS_ON_PRODUCTION: "1" };
+    const r = checkEnvironment(onPurpose);
+    expect(r.problems).toEqual([]);
+    expect(r.warnings.join(" ")).toMatch(/Open access is ON/);
+  });
+
   it("the deployment health check calls a leftover setting a problem", () => {
     const prod = { VERCEL_ENV: "production", DATABASE_URL: "x", AUTH_SECRET: "a".repeat(40), CRON_SECRET: "c".repeat(20), APP_URL: "https://x.example", GEMINI_API_KEY: "x", GEMINI_MODEL: "x" };
     expect(checkEnvironment({ ...prod, DEMO_OPEN_ACCESS: "1" }).problems.join(" ")).toMatch(/DEMO_OPEN_ACCESS/);

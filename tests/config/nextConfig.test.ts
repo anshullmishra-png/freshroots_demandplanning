@@ -72,9 +72,9 @@ describe("runtime", () => {
     expect(pkg.engines.node).toBe(">=22");
   });
 
-  it("a push to main does not deploy production by itself, until go-live removes this lock on purpose", () => {
+  it("a push to main deploys Production (the shared link is the Production deployment), in Singapore", () => {
     const v = JSON.parse(readFileSync(path.join(root, "vercel.json"), "utf8"));
-    expect(v.git.deploymentEnabled.main).toBe(false);
+    expect(v.git).toBeUndefined(); // no lock: main goes to Production like the project's other apps
     expect(v.regions).toEqual(["sin1"]);
   });
 
