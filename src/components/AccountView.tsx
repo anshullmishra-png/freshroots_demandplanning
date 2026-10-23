@@ -1,9 +1,10 @@
 import { SignOutButton } from "@/components/SignOutButton";
+import { RoleList } from "@/components/RoleSwitcher";
 import { Card, Label } from "@/components/ui";
 import { ROLE_LABELS, type Role } from "@/lib/auth/permissions";
 
 /** Who is signed in, and the way out. Pure, so the browser checks render the same thing. */
-export function AccountView({ user }: { user: { name: string; email: string; role: Role } }) {
+export function AccountView({ user, switchRoles = false }: { user: { name: string; email: string; role: Role }; switchRoles?: boolean }) {
   return (
     <div className="flex max-w-xl flex-col gap-8">
       <div>
@@ -25,6 +26,13 @@ export function AccountView({ user }: { user: { name: string; email: string; rol
           <SignOutButton />
         </div>
       </Card>
+      {switchRoles && (
+        <Card>
+          <Label>Switch role</Label>
+          <p className="mb-3 mt-1 text-sm text-mutedtext">Open another person&apos;s workspace without signing out.</p>
+          <RoleList current={user.role} />
+        </Card>
+      )}
     </div>
   );
 }

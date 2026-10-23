@@ -39,6 +39,8 @@ export default defineConfig({
         // browser's "carry on" loop gets exercised for real.
         env: {
           AI_CLIENT: "mock",
+          DEMO_OPEN_ACCESS: "1", // so the role switcher can be tested
+
           AI_MOCK_DELAY_MS: "700",
           AI_STEP_BUDGET_SECONDS: "0.5",
           APP_URL: `http://localhost:${PORT}`,

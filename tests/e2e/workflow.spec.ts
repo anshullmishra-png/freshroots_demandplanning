@@ -223,3 +223,28 @@ test("security: headers are on, and the sixth wrong password is locked out", asy
   expect(Number(locked.headers()["retry-after"])).toBeGreaterThan(0);
   void browser;
 });
+
+test("role switcher: one click moves between people with no sign-out, and lands on each home page", async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto("/api/auth/demo?role=procurement");
+  await expect(page).toHaveURL(/\/orders/);
+
+  const switchTo = async (name: RegExp, url: RegExp, heading: string) => {
+    await page.getByRole("button", { name: "Switch role" }).click();
+    await page.getByRole("link", { name }).click();
+    await expect(page).toHaveURL(url);
+    await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
+  };
+  await switchTo(/^Raghav/, /\/review/, "Review AI decisions");
+  await switchTo(/^Priya/, /\/dashboard/, "Dashboard");
+  await expect(page.getByLabel("Stockout lost sales (Rs)")).toBeVisible(); // Priya's own form
+  await switchTo(/^Procurement Team/, /\/orders/, "Orders");
+
+  // The list marks who you are, and Escape closes it.
+  await page.getByRole("button", { name: "Switch role" }).click();
+  await expect(page.getByRole("link", { name: /^Procurement Team/ })).toHaveAttribute("aria-current", "true");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("link", { name: /^Procurement Team/ })).toHaveCount(0);
+  await context.close();
+});

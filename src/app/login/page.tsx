@@ -2,12 +2,11 @@ import { ShieldCheck, Sprout, UserCheck, TrendingDown } from "lucide-react";
 import { LoginForm } from "@/components/LoginForm";
 import { Card, Label, btnSecondary } from "@/components/ui";
 import { demoEnabled } from "@/lib/auth/demo";
-import { ROLE_LABELS, type Role } from "@/lib/auth/permissions";
+import { ROLE_LABELS } from "@/lib/auth/permissions";
+import { SWITCHABLE_ROLES, switchHref } from "@/lib/auth/switchable";
 
 export const metadata = { title: "Sign in | Freshroots Demand Planning" };
 
-const DEMO_ROLES: Role[] = ["raghav", "procurement", "priya", "deepa", "ceo", "admin"];
-const DEMO_NAMES: Record<Role, string> = { raghav: "Raghav", procurement: "Procurement", priya: "Priya", deepa: "Deepa", ceo: "CEO", admin: "Admin" };
 
 const PROMISES = [
   { icon: TrendingDown, title: "Fewer stockouts and overstocks", text: "Forecasts each SKU and flags the ones about to run short or pile up, in plain rules anyone can check." },
@@ -57,10 +56,10 @@ export default function LoginPage() {
               <h2 className="mb-1 text-lg font-semibold text-sapphire">Continue as</h2>
               <p className="mb-4 text-sm text-mutedtext">Choose a role to open its workspace.</p>
               <ul className="grid gap-2 sm:grid-cols-2">
-                {DEMO_ROLES.map((role) => (
+                {SWITCHABLE_ROLES.map(({ role, name }) => (
                   <li key={role}>
-                    <a href={`/api/auth/demo?role=${role}`} className={`${btnSecondary} w-full flex-col items-start gap-0 py-2 text-left leading-tight`}>
-                      <span>{DEMO_NAMES[role]}</span>
+                    <a href={switchHref(role)} className={`${btnSecondary} w-full flex-col items-start gap-0 py-2 text-left leading-tight`}>
+                      <span>{name}</span>
                       <span className="text-xs font-semibold text-mutedtext">{ROLE_LABELS[role]}</span>
                     </a>
                   </li>
