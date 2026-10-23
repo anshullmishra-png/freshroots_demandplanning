@@ -6,6 +6,7 @@ import { createMockClient, echoHandler } from "@/lib/ai/mock";
 import { decideRun } from "@/lib/workflow/runs";
 import { continueRun } from "@/lib/workflow/startRun";
 import { reviewDecision } from "@/lib/workflow/review";
+import { loadRules } from "@/lib/config/rules";
 import { fastRules, prompts } from "../helpers/ai";
 import { aiRuntime, count, createTestDb, newSeedRun, resetRunData, seedTestUsers, startSeedRun, type TestUsers } from "../helpers/workflow";
 
@@ -36,6 +37,12 @@ describe("the AI step saves its progress and can be resumed", () => {
     expect(await count(db, "flags")).toBe(7);
     expect(await count(db, "ai_decisions")).toBe(0);
     expect((await db.select().from(auditLog).where(eq(auditLog.action, "run.ai_done")))).toHaveLength(0);
+  });
+
+  it("the time budget comes from config (ai.step_budget_seconds): 150 by default, and 0 stops before any decision", async () => {
+    expect(loadRules().ai.step_budget_seconds).toBe(150);
+    const none = fastRules((c) => ((c.ai.concurrency = 2), (c.ai.step_budget_seconds = 0)));
+    expect(await newSeedRun(db, { createdBy: u.raghav.id, rules: none })).toMatchObject({ flagCount: 7, remaining: 7, status: "flagged" });
   });
 
   it("carrying on finishes it: 7 decisions, open for review, and the completion is audited once", async () => {

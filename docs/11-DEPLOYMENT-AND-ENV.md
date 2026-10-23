@@ -56,6 +56,8 @@ The user has said they will provide a Gemini paid API key, GitHub access, a Verc
 ```
 Keep the rule engine and the kill logic pure (data in, result out) so the tests in `10-TEST-PLAN.md` run without a database.
 
+Phase 8 adds `AI_CLIENT` (tests only; refused on production), `E2E_DATABASE_URL`, `E2E_BASE_URL` and `VERCEL_AUTOMATION_BYPASS_SECRET` (end-to-end test only). The step-by-step deployment, per-environment variable table and operations are in `14-DEPLOY-RUNBOOK.md`.
+
 ## Zoho Inventory adapter (later)
 Define now, implement later:
 ```ts

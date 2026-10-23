@@ -45,9 +45,6 @@ export interface CreatedRun {
   remaining: number;
 }
 
-/** How long one request may spend on AI calls before it saves its progress and hands back (Vercel allows 300 s). */
-export const DEFAULT_AI_BUDGET_MS = 150_000;
-
 /**
  * Steps 4 and 5 of the flow. First the rule engine: the run and its flags are stored at once, with the rules used, so
  * the run can be reproduced (G-R3). Flags come only from the rule engine (G-A1). Then the AI decisions are made in
@@ -170,7 +167,8 @@ export async function decideRun(
   },
 ): Promise<CreatedRun> {
   const { runId, rules, client, model, prompts } = args;
-  const budgetMs = args.budgetMs ?? DEFAULT_AI_BUDGET_MS;
+  // How long one request may spend on AI calls before it saves its progress and hands back (Vercel allows 300 s).
+  const budgetMs = args.budgetMs ?? rules.ai.step_budget_seconds * 1000;
   const started = Date.now();
 
   const [run] = await db.select().from(runs).where(eq(runs.id, runId)).limit(1);

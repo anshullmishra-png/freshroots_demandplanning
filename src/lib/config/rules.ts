@@ -33,6 +33,8 @@ export interface RulesConfig {
     max_retries: number;
     timeout_seconds: number;
     concurrency: number;
+    /** One request makes AI decisions for this long, then saves its progress and hands back. Vercel allows 300. */
+    step_budget_seconds: number;
     retry_delay_ms: number;
     /** Warn Raghav and Deepa when more than this share of a run's decisions are fallbacks. */
     fallback_warning_pct: number;

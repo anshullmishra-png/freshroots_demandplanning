@@ -33,6 +33,7 @@
     "max_retries": 2,
     "timeout_seconds": 30,
     "concurrency": 5,
+    "step_budget_seconds": 150,
     "retry_delay_ms": 500,
     "fallback_warning_pct": 30
   },

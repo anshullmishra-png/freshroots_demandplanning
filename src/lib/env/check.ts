@@ -1,5 +1,7 @@
 // What a deployment needs in its environment, checked without ever returning a value. Used by the deep health
 // check and by the guard that keeps test settings out of production.
+import { GEMINI_KEY_VAR, geminiKeyIsSet } from "@/lib/ai/gemini";
+
 type Env = Record<string, string | undefined>;
 
 export interface EnvReport {
@@ -33,7 +35,7 @@ export function checkEnvironment(env: Env = process.env): EnvReport {
     AUTH_SECRET: long("AUTH_SECRET", 32),
     CRON_SECRET: long("CRON_SECRET", 16),
     APP_URL: !!env.APP_URL,
-    GEMINI_API_KEY: !!env.GEMINI_API_KEY,
+    [GEMINI_KEY_VAR]: geminiKeyIsSet(env),
     GEMINI_MODEL: !!env.GEMINI_MODEL,
   };
 
@@ -43,7 +45,7 @@ export function checkEnvironment(env: Env = process.env): EnvReport {
   if (!present.AUTH_SECRET) problems.push("AUTH_SECRET is missing or shorter than 32 characters.");
   if (!present.CRON_SECRET) problems.push("CRON_SECRET is missing or shorter than 16 characters: the daily kill check cannot run.");
   if (aiMode === "gemini") {
-    if (!present.GEMINI_API_KEY) problems.push("GEMINI_API_KEY is not set.");
+    if (!present[GEMINI_KEY_VAR]) problems.push(`${GEMINI_KEY_VAR} is not set.`);
     if (!present.GEMINI_MODEL) problems.push("GEMINI_MODEL is not set.");
   }
   if (production) {

@@ -86,6 +86,16 @@ describe("the mock AI is refused on production", () => {
   it("throws on production", () => {
     expect(() => getAiRuntime(rules, env({ AI_CLIENT: "mock", VERCEL_ENV: "production" }))).toThrow(/AI_CLIENT=mock/);
   });
+  it("the test hooks shorten the AI step's time budget and slow the mock, and are ignored when malformed", async () => {
+    expect(getAiRuntime(rules, env({ AI_CLIENT: "mock", AI_STEP_BUDGET_SECONDS: "0.5" })).budgetMs).toBe(500);
+    expect(getAiRuntime(rules, env({ AI_CLIENT: "mock", AI_STEP_BUDGET_SECONDS: "0" })).budgetMs).toBe(0);
+    expect(getAiRuntime(rules, env({ AI_CLIENT: "mock" })).budgetMs).toBeUndefined();
+    expect(getAiRuntime(rules, env({ AI_CLIENT: "mock", AI_STEP_BUDGET_SECONDS: "soon" })).budgetMs).toBeUndefined();
+    const slow = getAiRuntime(rules, env({ AI_CLIENT: "mock", AI_MOCK_DELAY_MS: "60" }));
+    const t0 = Date.now();
+    await slow.client.generate({ input: {} } as never).catch(() => {});
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(55);
+  });
   it("works on preview and locally", () => {
     expect(getAiRuntime(rules, env({ AI_CLIENT: "mock", VERCEL_ENV: "preview" })).model).toBe("mock-model");
     expect(getAiRuntime(rules, env({ AI_CLIENT: "mock" })).model).toBe("mock-model");
@@ -127,7 +137,8 @@ describe("deep health", () => {
   });
 
   it("reports an unreachable database without leaking the driver's message", async () => {
-    const broken = { execute: async () => { throw new Error("connect failed for postgres://user:hunter2@host/db"); } } as unknown as AnyDb;
+    // The real driver's message can carry the connection string; the check must say nothing of it.
+    const broken = { execute: async () => { throw new Error("connect failed for user app with password hunter2"); } } as unknown as AnyDb;
     const h = await deepHealth(broken, GOOD);
     expect(h.ok).toBe(false);
     expect(h.database.reachable).toBe(false);

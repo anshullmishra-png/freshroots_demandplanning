@@ -19,6 +19,11 @@ export default defineConfig({
   use: {
     baseURL: EXTERNAL ?? `http://localhost:${PORT}`,
     timezoneId: "Asia/Kolkata",
+    // A Vercel preview is behind Vercel's own sign-in. Its "Protection Bypass for Automation" secret lets the test in
+    // (the second header makes Vercel set a cookie, so page loads after the first carry it too).
+    extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+      ? { "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET, "x-vercel-set-bypass-cookie": "true" }
+      : undefined,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   // Against a deployed preview the preview's own settings apply (it must have AI_CLIENT=mock). Locally the app is built
@@ -30,6 +35,14 @@ export default defineConfig({
         url: `http://localhost:${PORT}/api/health`,
         reuseExistingServer: false,
         timeout: 600_000,
-        env: { AI_CLIENT: "mock", APP_URL: `http://localhost:${PORT}`, EMAIL_PROVIDER: "console" },
+        // Each mock answer takes 0.7 s and a request may work for 0.5 s, so the run needs a second request: the
+        // browser's "carry on" loop gets exercised for real.
+        env: {
+          AI_CLIENT: "mock",
+          AI_MOCK_DELAY_MS: "700",
+          AI_STEP_BUDGET_SECONDS: "0.5",
+          APP_URL: `http://localhost:${PORT}`,
+          EMAIL_PROVIDER: "console",
+        },
       },
 });

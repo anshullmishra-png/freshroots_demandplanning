@@ -70,7 +70,7 @@ export async function startRun(
     client: input.ai.client,
     model: input.ai.model,
     prompts: input.ai.prompts,
-    budgetMs: input.budgetMs,
+    budgetMs: input.budgetMs ?? input.ai.budgetMs,
   });
   return { ...run, snapshotId, warnings: result.warnings.length };
 }
@@ -86,5 +86,5 @@ export async function continueRun(
   input: { rules: RulesConfig; ai: AiRuntime; budgetMs?: number },
 ): Promise<CreatedRun> {
   assertCan(actor.role, "start_run");
-  return decideRun(db, { runId, rules: input.rules, client: input.ai.client, model: input.ai.model, prompts: input.ai.prompts, budgetMs: input.budgetMs });
+  return decideRun(db, { runId, rules: input.rules, client: input.ai.client, model: input.ai.model, prompts: input.ai.prompts, budgetMs: input.budgetMs ?? input.ai.budgetMs });
 }

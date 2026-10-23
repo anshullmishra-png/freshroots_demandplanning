@@ -62,7 +62,12 @@ test("H1. Raghav uploads the five seed files, starts a run, and sees 7 flags", a
   await expect(page.getByText("No errors. The files can be used.")).toBeVisible();
   const ack = page.getByLabel("I have read the warnings");
   if (await ack.count()) await ack.check();
+  // Locally the mock is slow and the time budget short, so the first request cannot finish the run and the screen
+  // must ask for the rest (docs/12 Q52). A preview needs the same two settings and E2E_EXPECT_RESUME=1.
+  const resumeExpected = !process.env.E2E_BASE_URL || process.env.E2E_EXPECT_RESUME === "1";
+  const continued = resumeExpected ? page.waitForResponse((r) => /\/api\/runs\/\d+\/continue$/.test(r.url()), { timeout: 60_000 }) : null;
   await page.getByRole("button", { name: /Start run/ }).click();
+  if (continued) expect((await continued).status()).toBe(200);
   await page.waitForURL(/\/review\?run=\d+/, { timeout: 150_000 });
   await expect(page.getByRole("heading", { name: "Review AI decisions" })).toBeVisible();
   await expect(page.locator("article[aria-label^='SKU']")).toHaveCount(7);
