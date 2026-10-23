@@ -41,7 +41,7 @@ export function CoverChart({ items }: { items: CoverPoint[] }) {
           const lo = Math.min(c.cover, c.after ?? c.cover);
           const hi = Math.max(c.cover, c.after ?? c.cover);
           return (
-            <li key={c.skuId} className="grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_minmax(0,6.5rem)] items-center gap-3 text-xs">
+            <li key={c.skuId} className="grid grid-cols-[minmax(0,8rem)_minmax(0,1fr)_minmax(0,6.5rem)] md:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_minmax(0,6.5rem)] items-center gap-3 text-xs">
               <span className="truncate text-sapphire" title={`${c.skuId} ${c.name}`}>
                 <span className="font-bold">{c.skuId}</span> <span className="text-mutedtext">{c.name.replace(/^Freshroots /, "")}</span>
               </span>
@@ -123,7 +123,9 @@ export function DemandChart({ weeks }: { weeks: DemandWeek[] }) {
   const W = 640;
   const H = 210;
   const pad = { l: 44, r: 16, t: 14, b: 28 };
-  const max = Math.max(...weeks.map((w) => w.units)) * 1.12;
+  // Round numbers on the axis (0, half, top) rather than whatever the data happens to reach.
+  const top = Math.ceil((Math.max(...weeks.map((w) => w.units)) * 1.1) / 100) * 100;
+  const max = top;
   const x = (i: number) => pad.l + (weeks.length === 1 ? (W - pad.l - pad.r) / 2 : (i / (weeks.length - 1)) * (W - pad.l - pad.r));
   const y = (v: number) => pad.t + (1 - v / max) * (H - pad.t - pad.b);
   const line = weeks.map((w, i) => `${x(i)},${y(w.units)}`).join(" ");
@@ -136,7 +138,7 @@ export function DemandChart({ weeks }: { weeks: DemandWeek[] }) {
     if (last && last.to === i - 1) last.to = i;
     else bands.push({ from: i, to: i });
   });
-  const ticks = [0, 0.5, 1].map((t) => Math.round((max / 1.12) * t));
+  const ticks = [0, top / 2, top];
   const peak = weeks.reduce((a, w) => (w.units > a.units ? w : a));
   const latest = weeks.at(-1)!;
   const every = Math.ceil(weeks.length / 6);
