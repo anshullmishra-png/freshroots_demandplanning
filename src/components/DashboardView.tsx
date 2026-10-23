@@ -144,7 +144,7 @@ export function DashboardView({ data, canExport }: { data: DashboardData; canExp
         <Kpi
           icon={ClipboardCheck}
           label="AI trust check"
-          sub="Kill switch 1"
+          sub="Switch 1"
           pill={<Pill tone={kill.kill1.state === "killed" ? "danger" : "success"}>{kill.kill1.state === "killed" ? "Stopped" : "Armed"}</Pill>}
           big={k1.verdict === "collecting" ? `${k1.reviewed} of ${k1.minReviewed}` : `${(k1.ratePct ?? 0).toFixed(1)}%`}
           note={
@@ -164,7 +164,7 @@ export function DashboardView({ data, canExport }: { data: DashboardData; canExp
         <Kpi
           icon={ShieldCheck}
           label="Loss limit"
-          sub="Kill switch 2"
+          sub="Switch 2"
           pill={<Pill tone={pill2.tone}>{pill2.text}</Pill>}
           big={k2.state === "killed" ? "Stopped" : k2.state === "alert" ? "Monitor closely" : "On track"}
           note={`Alert above ${formatLakhs(k2.alertAbove)} · stops above ${formatLakhs(k2.killAbove)}`}
