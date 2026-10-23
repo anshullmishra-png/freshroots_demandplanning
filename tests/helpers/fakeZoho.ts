@@ -17,7 +17,7 @@ export function fakeConfig(over: Partial<ZohoConfig> = {}): ZohoConfig {
   return { clientId: "client-1", clientSecret: "secret-1", refreshToken: "refresh-token-abcdef", orgId: "9001", dc: "in", ...over };
 }
 
-export function createFakeZoho(opts: { vendors?: string[]; items?: Array<{ sku: string; name: string }>; pageSize?: number; org?: string } = {}) {
+export function createFakeZoho(opts: { vendors?: string[]; items?: Array<{ sku: string; name: string }>; pageSize?: number; org?: string; poKey?: "purchase_order" | "purchaseorder" | "none" } = {}) {
   const org = opts.org ?? "9001";
   const pageSize = opts.pageSize ?? 200;
   const vendors = (opts.vendors ?? []).map((name, i) => ({ contact_id: `v${i + 1}`, contact_name: name, contact_type: "vendor" }));
@@ -105,12 +105,13 @@ export function createFakeZoho(opts: { vendors?: string[]; items?: Array<{ sku: 
         body: b,
       };
       pos.set(po.purchaseorder_id, po);
-      return json(201, { code: 0, message: "The purchase order has been created.", purchase_order: po });
+      const key = opts.poKey ?? "purchase_order";
+      return json(201, { code: 0, message: "The purchase order has been created.", ...(key === "none" ? {} : { [key]: po }) });
     }
     const m = /^\/purchaseorders\/([^/]+)$/.exec(path);
     if (method === "GET" && m) {
       const po = pos.get(decodeURIComponent(m[1]));
-      return po ? json(200, { code: 0, purchase_order: po }) : json(404, { code: 1002, message: "Purchase order does not exist." });
+      return po ? json(200, { code: 0, [opts.poKey === "purchaseorder" ? "purchaseorder" : "purchase_order"]: po }) : json(404, { code: 1002, message: "Purchase order does not exist." });
     }
     return json(404, { code: 5, message: "Invalid URL" });
   }) as typeof fetch;

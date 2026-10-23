@@ -155,6 +155,26 @@ describe("sending reviewed orders to Zoho", () => {
     expect((await db.select().from(buyingDecisions)).every((b) => b.zohoPoId === null)).toBe(true);
   });
 
+  it("understands Zoho answering with the order under 'purchaseorder' as well as 'purchase_order'", async () => {
+    const { reorders } = await reviewedRun();
+    const { zoho, client } = zohoWith({ poKey: "purchaseorder" });
+    const r = await sendToZoho(db, u.procurement, reorders.map((b) => b.id), { client });
+    expect(r.sent).toBe(reorders.length);
+    expect(r.failed).toEqual([]);
+    zoho.issue(r.purchaseOrders[0].id);
+    expect((await syncFromZoho(db, u.procurement, { client })).placed).toBe(r.purchaseOrders[0].lines);
+  });
+
+  it("never drops an order silently: if Zoho does not say which order it made, every line is reported", async () => {
+    const { reorders } = await reviewedRun();
+    const { client } = zohoWith({ poKey: "none" });
+    const r = await sendToZoho(db, u.procurement, reorders.map((b) => b.id), { client });
+    expect(r.sent).toBe(0);
+    expect(r.failed.length).toBe(reorders.length);
+    expect(r.failed[0].error).toMatch(/did not say which order it made/);
+    expect((await db.select().from(buyingDecisions)).every((b) => b.zohoPoId === null)).toBe(true);
+  });
+
   it("is a clear 409 when Zoho is not connected", async () => {
     const { reorders } = await reviewedRun();
     await expect(sendToZoho(db, u.procurement, reorders.map((b) => b.id))).rejects.toMatchObject({ status: 409, code: "ZOHO_NOT_CONNECTED" });

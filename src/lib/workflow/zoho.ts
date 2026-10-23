@@ -70,8 +70,16 @@ export async function sendToZoho(
     throw e;
   }
 
-  const good = sunk.results.filter((r) => r.ok && r.decisionId && r.purchaseOrderId);
+  const good = sunk.results.filter((r) => r.ok && r.decisionId && r.purchaseOrderId && r.purchaseOrderNumber);
   const failed = sunk.results.filter((r) => !r.ok && !r.error?.startsWith("Not an order")).map((r) => ({ skuId: r.sku_id, error: r.error ?? "Failed." }));
+  // Nothing may vanish: an order with no clear answer is reported, never dropped.
+  const answered = new Set(sunk.results.map((r) => r.decisionId));
+  for (const o of todo) {
+    if (o.action === "REORDER" && !answered.has(o.id)) failed.push({ skuId: o.skuId, error: "Zoho gave no answer for this order." });
+  }
+  for (const r of sunk.results) {
+    if (r.ok && !(r.decisionId && r.purchaseOrderId && r.purchaseOrderNumber)) failed.push({ skuId: r.sku_id, error: "Zoho did not say which order it made. Check Zoho before sending again." });
+  }
   const holds = sunk.results.filter((r) => !r.ok && r.error?.startsWith("Not an order")).length;
 
   const sentAt = opts.now ?? new Date();

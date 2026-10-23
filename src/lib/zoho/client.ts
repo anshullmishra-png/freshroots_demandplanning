@@ -104,7 +104,10 @@ export function createZohoClient(cfg: ZohoConfig, opts: { fetch?: typeof fetch; 
     const body = (await res.json().catch(() => ({}))) as Json;
     if (!res.ok || typeof body.access_token !== "string") {
       // Zoho's own error word (for example "invalid_client") is safe; nothing we sent is repeated.
-      throw new ZohoError(res.status || 502, "ZOHO_AUTH", `Zoho refused the connection (${str(body.error) || res.status}). Check the Zoho settings.`);
+      const why = str(body.error) || String(res.status);
+      // Zoho answers "Access Denied" both for wrong settings and when tokens are asked for too fast (about 10 in 10 minutes).
+      const hint = /access denied/i.test(why) ? " If the settings are right, Zoho may be limiting how fast tokens are issued: wait 10 minutes." : "";
+      throw new ZohoError(res.status || 502, "ZOHO_AUTH", `Zoho refused the connection (${why}). Check the Zoho settings.${hint}`);
     }
     tokens.set(cacheKey, { token: body.access_token, expiresAt: now() + Number(body.expires_in ?? 3600) * 1000 });
     return body.access_token;
@@ -197,13 +200,15 @@ export function createZohoClient(cfg: ZohoConfig, opts: { fetch?: typeof fetch; 
           line_items: lines.map((l) => ({ item_id: l.itemId, quantity: l.quantity })),
         },
       });
-      return toPo((json.purchase_order ?? {}) as Json);
+      const made = toPo(((json.purchase_order ?? json.purchaseorder) ?? {}) as Json);
+      if (!made.id) throw new ZohoError(502, "ZOHO_UNEXPECTED", "Zoho answered but did not say which order it made. Check Zoho before sending again.");
+      return made;
     },
 
     async getPurchaseOrder(id) {
       try {
         const json = await request("GET", `/purchaseorders/${encodeURIComponent(id)}`);
-        return toPo((json.purchase_order ?? {}) as Json);
+        return toPo(((json.purchase_order ?? json.purchaseorder) ?? {}) as Json);
       } catch (e) {
         if (e instanceof ZohoError && e.status === 404) return null;
         throw e;

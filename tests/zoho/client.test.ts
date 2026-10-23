@@ -84,6 +84,17 @@ describe("talking to Zoho", () => {
     for (const secret of ["wrong-secret-xyz", "refresh-token-abcdef", "client-1"]) expect(err.message).not.toContain(secret);
   });
 
+  it("'Access Denied' from the token service comes with the hint about asking for tokens too fast", async () => {
+    const zoho = createFakeZoho();
+    const real = zoho.fetch;
+    const denied = (async (input: string | URL | Request, init?: RequestInit) =>
+      String(input).includes("oauth") ? new Response(JSON.stringify({ error: "Access Denied" }), { status: 200 }) : real(input, init)) as typeof fetch;
+    const err = await createZohoClient(fakeConfig(), { fetch: denied }).listVendors().catch((e) => e);
+    expect(err.code).toBe("ZOHO_AUTH");
+    expect(err.message).toMatch(/Access Denied/);
+    expect(err.message).toMatch(/wait 10 minutes/);
+  });
+
   it("a rate limit is reported as such", async () => {
     const zoho = createFakeZoho({ vendors: ["A"] });
     const c = createZohoClient(fakeConfig(), { fetch: zoho.fetch });
