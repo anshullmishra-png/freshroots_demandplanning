@@ -103,15 +103,9 @@ Neon project `freshroots_demandplanning` (Singapore, `aws-ap-southeast-1`) has t
 - `vercel env add` reads the value from stdin and stores it as a hidden secret, which `vercel env pull` cannot show. Use Git Bash and `printf '%s'` so no newline is added, and set `MSYS_NO_PATHCONV=1` before `vercel api /v1/...` calls.
 
 ## 9. The shared link and how it is updated
-The shared address is `https://freshroots-demand-planning-demo.vercel.app`. It follows the Git branch **`live`**: whatever is pushed to `live` is built by Vercel (as a preview, with the preview database and settings) and the address moves to it. Production stays empty and is not involved.
+The shared address `https://freshroots-demand-planning-demo.vercel.app` is the project's **Production** deployment (section 11). To publish an update: finish the work, run the checks, merge into `main` and push `main`. Vercel builds it and the link follows, the same way the owner's other apps work. (The `live` branch was used before 2026-10-23 and is no longer needed.)
 
-To publish an update: finish the work, merge it into `main`, run the checks, then
-
-    git push origin main:live
-
-To put the story back to the start (every decision waiting for Raghav): `npm run e2e:reset -- --host <preview database host>` and then `E2E_BASE_URL=https://freshroots-demand-planning-demo.vercel.app npm run demo:stage`.
-
-The link moved to this build automatically on 2026-10-23 when `live` was pushed; no manual alias step is needed.
+To put the story back to the start (every decision waiting for Raghav): `npm run e2e:reset -- --host <test database host>` and then `E2E_BASE_URL=https://freshroots-demand-planning-demo.vercel.app npm run demo:stage`. That wipes the test data the link runs on.
 
 ## 10. Zoho Inventory (Phase 9)
 Connected per environment with five settings: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_ORG_ID`, `ZOHO_DC` (`in` for zoho.in). Without them the Orders page says "Not connected" and the CSV export is the way out, exactly as before.
@@ -132,3 +126,5 @@ What that means, plainly:
 - **Open access is on for Production** with two deliberate switches: `DEMO_OPEN_ACCESS=1` and `ALLOW_OPEN_ACCESS_ON_PRODUCTION=1`. Without the second one, Production refuses open access as before. The deep health check shows a warning while both are set.
 - Anyone with the link can sign in as any role, start runs on the real Gemini and send draft orders to Zoho. Fine while the data is test data.
 - **Real go-live later** means: point `DATABASE_URL` at the empty `production` branch, create the real accounts, and remove both switches. Production then refuses open access again.
+
+Status 2026-10-23: Production `19taq1sqm` (commit 0cd3917) is live and serves the shared address. Its settings are in Vercel's Production scope: the test database, the real Gemini, the connected Zoho organisation, both open-access switches, and none of the mock or speed-up test hooks. `/api/health/deep` (with the production cron secret) reports ok with the open-access warning. Also note: the daily kill check in `vercel.json` now runs, since this is Production.
