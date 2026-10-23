@@ -60,7 +60,7 @@ export default function ReviewPage({ searchParams }: { searchParams: Promise<{ r
             {held.length > 0 && (
               <HeldOrders orders={held.map((o) => ({ id: o.id, skuId: o.skuId, skuName: o.skuName, unit: o.unit, action: o.action, quantity: o.quantity, runId: o.runId }))} />
             )}
-            <ReviewBoard data={dto} canReview={canReview} />
+            <ReviewBoard data={dto} canReview={canReview} canContinue={can(user.role, "start_run")} />
           </div>
         );
       }}

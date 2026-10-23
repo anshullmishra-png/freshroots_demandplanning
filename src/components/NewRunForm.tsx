@@ -4,6 +4,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent } from "react";
 import { Card, CardHeader, Label, btnPrimary, btnSecondary, cx } from "@/components/ui";
+import { continueUntilDone } from "@/lib/continue-client";
 
 type FileKey = "sales" | "inventory" | "sku_master" | "distributor_master" | "calendar";
 
@@ -40,6 +41,7 @@ export function NewRunForm({ blockedReason = null }: { blockedReason?: string | 
   const [acknowledged, setAcknowledged] = useState(false);
   const [busy, setBusy] = useState<"validate" | "run" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
   const required = SLOTS.filter((s) => !(usePrevious && s.master));
   const blocked = blockedReason !== null;
@@ -93,9 +95,22 @@ export function NewRunForm({ blockedReason = null }: { blockedReason?: string | 
         setBusy(null);
         return;
       }
+      setProgress({ done: json.flagCount - json.remaining, total: json.flagCount });
+      // One request works for about 2.5 minutes. If decisions are still missing, ask for them until none remain.
+      if (json.remaining > 0) {
+        try {
+          await continueUntilDone(json.runId, (s) => setProgress({ done: s.flagCount - s.remaining, total: s.flagCount }));
+        } catch (e) {
+          // Nothing is lost: the run is saved. Raghav can carry on from the Review page.
+          setError(`${e instanceof Error ? e.message : "The AI step stopped."} The run is saved; carry on from the Review page.`);
+          setBusy(null);
+          router.push(`/review?run=${json.runId}`);
+          return;
+        }
+      }
       router.push(`/review?run=${json.runId}`);
     } catch {
-      setError("Could not reach the server.");
+      setError("Could not reach the server. If the run was created, find it on the Review page.");
       setBusy(null);
     }
   }
@@ -199,9 +214,14 @@ export function NewRunForm({ blockedReason = null }: { blockedReason?: string | 
             )}
             <div className="mt-4">
               <button type="button" className={btnPrimary} disabled={!canStart} onClick={start}>
-                {busy === "run" ? "Running... this can take a minute" : "Start run"}
+                {busy === "run" ? "Running... this can take a few minutes" : "Start run"}
                 <ArrowRight size={18} aria-hidden="true" />
               </button>
+              {busy === "run" && progress && (
+                <p role="status" className="mt-3 text-sm font-semibold text-sapphire">
+                  AI decisions: {progress.done} of {progress.total}. Keep this page open.
+                </p>
+              )}
             </div>
           </Card>
         )}

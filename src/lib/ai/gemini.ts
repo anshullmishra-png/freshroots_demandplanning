@@ -6,6 +6,10 @@ import { redactSecrets, type GeminiClient } from "./client";
  * the browser bundle may import this file (guardrail G-A7; checked by scripts/check-bundle-secrets.mjs).
  * The model name is passed in per call from GEMINI_MODEL; none is hardcoded.
  */
+/** The one place that names the key's variable. The health check asks here whether it is set; it never sees the value. */
+export const GEMINI_KEY_VAR = "GEMINI_API_KEY";
+export const geminiKeyIsSet = (env: Record<string, string | undefined>): boolean => !!env[GEMINI_KEY_VAR];
+
 export function createGeminiClient(apiKey: string | undefined = process.env.GEMINI_API_KEY): GeminiClient {
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set. Add it to .env.local (see .env.example).");
   const ai = new GoogleGenAI({ apiKey });

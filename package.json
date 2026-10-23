@@ -2,6 +2,9 @@
   "name": "freshroots-demand-planning",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -18,7 +21,9 @@
     "check-bundle": "node scripts/check-bundle-secrets.mjs",
     "ai:smoke": "tsx scripts/ai-smoke.ts",
     "seed:users": "tsx scripts/seed-users.ts",
-    "seed:run": "tsx scripts/seed-run.ts"
+    "seed:run": "tsx scripts/seed-run.ts",
+    "e2e:reset": "tsx scripts/e2e-reset.ts",
+    "smoke:preview": "tsx scripts/preview-smoke.ts"
   },
   "dependencies": {
     "@google/genai": "^2.30.0",

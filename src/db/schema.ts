@@ -53,6 +53,20 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Every sign-in attempt, for brute-force protection (config/rules.json login_protection). The email is stored as typed
+// (trimmed, lower case, cut to 200 characters), the IP as the host reports it. Never the password.
+export const loginAttempts = pgTable(
+  "login_attempts",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    emailKey: text("email_key").notNull(),
+    ip: text("ip"),
+    succeeded: boolean("succeeded").notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("login_attempts_email_at").on(t.emailKey, t.at), index("login_attempts_ip_at").on(t.ip, t.at)],
+);
+
 export const distributors = pgTable("distributors", {
   distributorId: text("distributor_id").primaryKey(),
   name: text("name").notNull(),

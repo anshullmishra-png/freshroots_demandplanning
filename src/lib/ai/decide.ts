@@ -125,7 +125,8 @@ function total(attempts: AttemptLog[]): number {
  */
 export async function generateDecisions(args: {
   client: GeminiClient;
-  run: RunResult;
+  /** Only the flags and run context are read, so a run can be decided a batch of flags at a time. */
+  run: Pick<RunResult, "flags" | "as_of_date" | "is_festival">;
   skus: SkuRow[];
   rules: RulesConfig;
   model: string;

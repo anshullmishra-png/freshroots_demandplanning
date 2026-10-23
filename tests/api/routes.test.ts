@@ -17,6 +17,7 @@ import { PATCH as amend } from "@/app/api/buying-decisions/[id]/route";
 import { POST as bulk } from "@/app/api/reviews/bulk-accept/route";
 import { POST as review } from "@/app/api/reviews/route";
 import { POST as startRunRoute } from "@/app/api/runs/route";
+import { POST as continueRoute } from "@/app/api/runs/[id]/continue/route";
 import { POST as validateRoute } from "@/app/api/runs/validate/route";
 import { NOW, removeLines, replaceOnce, seedFiles } from "../helpers/seed";
 import { TEST_PASSWORD, count, cookieFor, createTestDb, idFor, newSeedRun, resetRunData, seedTestUsers, tokenFor, type TestUsers } from "../helpers/workflow";
@@ -64,6 +65,7 @@ describe("F. sign-in is required on every guarded route (401)", () => {
     ["PATCH /api/buying-decisions/:id", amend, { id: "1" }],
     ["POST /api/runs", startRunRoute],
     ["POST /api/runs/validate", validateRoute],
+    ["POST /api/runs/:id/continue", continueRoute, { id: "1" }],
   ];
   it.each(cases)("%s with no cookie", async (_name, handler, params) => {
     const r = await call(handler, { body: {}, params });
@@ -113,6 +115,15 @@ describe("F. only the right role passes (403)", () => {
     const token = await tokenFor(u[role]);
     expect((await call(startRunRoute, { token, form: new FormData() })).status).toBe(403);
     expect((await call(validateRoute, { token, form: new FormData() })).status).toBe(403);
+    expect((await call(continueRoute, { token, params: { id: String(runId) } })).status).toBe(403);
+  });
+
+  it("raghav carrying on a run that is already open for review gets the state back (200), an unknown run is 404", async () => {
+    const token = await tokenFor(u.raghav);
+    const ok = await call(continueRoute, { token, params: { id: String(runId) } });
+    expect(ok.status).toBe(200);
+    expect(ok.json).toMatchObject({ runId, remaining: 0, status: "in_review" });
+    expect((await call(continueRoute, { token, params: { id: "9999" } })).status).toBe(404);
   });
 
   it("raghav can review (200) and the buying decision exists", async () => {
