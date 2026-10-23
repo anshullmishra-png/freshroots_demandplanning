@@ -4,9 +4,16 @@ import type { BuyingDecision, OrderSink, SinkResult } from "./sink";
 
 const norm = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
 
-/** The same selection of decisions always gets the same reference, so a retry finds the order it already made. */
-export function purchaseOrderReference(decisionIds: number[]): string {
-  const key = [...decisionIds].sort((a, b) => a - b).join(",");
+/**
+ * The same orders always get the same reference, so a retry finds the order it already made. The reference covers the
+ * SKU and quantity of every line as well as the ids: ids start again after a reset, and an old draft with different
+ * quantities must never be mistaken for this one.
+ */
+export function purchaseOrderReference(lines: Array<{ id: number; skuId: string; quantity: number }>): string {
+  const key = lines
+    .map((l) => `${l.id}:${l.skuId}:${l.quantity}`)
+    .sort()
+    .join(",");
   return `FR-${createHash("sha1").update(key).digest("hex").slice(0, 12).toUpperCase()}`;
 }
 
@@ -63,7 +70,7 @@ export class ZohoSink implements OrderSink {
       if (lines.length === 0) continue;
 
       try {
-        const reference = purchaseOrderReference(lines.map((l) => l.d.id));
+        const reference = purchaseOrderReference(lines.map((l) => ({ id: l.d.id, skuId: l.d.skuId, quantity: l.d.quantity })));
         const existing = await this.client.findPurchaseOrderByReference(reference);
         const runs = [...new Set(lines.map((l) => `run ${l.d.runId} (data as of ${l.d.asOfDate})`))].join(", ");
         const po =

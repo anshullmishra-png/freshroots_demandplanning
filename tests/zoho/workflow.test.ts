@@ -118,10 +118,15 @@ describe("sending reviewed orders to Zoho", () => {
     expect(retry.purchaseOrders.every((p) => /^PO-\d{5}$/.test(p.number))).toBe(true);
   });
 
-  it("the reference is stable for the same selection, in any order, and different for another", () => {
-    expect(purchaseOrderReference([3, 1, 2])).toBe(purchaseOrderReference([1, 2, 3]));
-    expect(purchaseOrderReference([1, 2, 3])).not.toBe(purchaseOrderReference([1, 2, 4]));
-    expect(purchaseOrderReference([1])).toMatch(/^FR-[0-9A-F]{12}$/);
+  it("the reference is stable for the same orders, in any order, and different when anything about them differs", () => {
+    const a = { id: 1, skuId: "SKU001", quantity: 750 };
+    const b = { id: 2, skuId: "SKU003", quantity: 300 };
+    expect(purchaseOrderReference([b, a])).toBe(purchaseOrderReference([a, b]));
+    expect(purchaseOrderReference([a, b])).not.toBe(purchaseOrderReference([a, { ...b, id: 3 }]));
+    expect(purchaseOrderReference([a])).toMatch(/^FR-[0-9A-F]{12}$/);
+    // After a reset the ids start again: the same id with another quantity or SKU is a different order.
+    expect(purchaseOrderReference([a])).not.toBe(purchaseOrderReference([{ ...a, quantity: 800 }]));
+    expect(purchaseOrderReference([a])).not.toBe(purchaseOrderReference([{ ...a, skuId: "SKU002" }]));
   });
 
   it("a SKU or vendor that is not in Zoho fails on its own; the rest still go", async () => {
