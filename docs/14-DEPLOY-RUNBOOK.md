@@ -110,3 +110,5 @@ To publish an update: finish the work, merge it into `main`, run the checks, the
     git push origin main:live
 
 To put the story back to the start (every decision waiting for Raghav): `npm run e2e:reset -- --host <preview database host>` and then `E2E_BASE_URL=https://freshroots-demand-planning-demo.vercel.app npm run demo:stage`.
+
+The link moved to this build automatically on 2026-10-23 when `live` was pushed; no manual alias step is needed.
