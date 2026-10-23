@@ -22,7 +22,8 @@
     "ai:smoke": "tsx scripts/ai-smoke.ts",
     "seed:users": "tsx scripts/seed-users.ts",
     "seed:run": "tsx scripts/seed-run.ts",
-    "e2e:reset": "tsx scripts/e2e-reset.ts"
+    "e2e:reset": "tsx scripts/e2e-reset.ts",
+    "smoke:preview": "tsx scripts/preview-smoke.ts"
   },
   "dependencies": {
     "@google/genai": "^2.30.0",

@@ -24,12 +24,19 @@ describe("continueUntilDone", () => {
     await expect(continueUntilDone(1, () => {}, fetcher)).rejects.toThrow("Automation is stopped.");
   });
 
-  it("gives up rather than loop forever when nothing ever finishes", async () => {
+  it("stops when requests make no progress, instead of looping", async () => {
     let calls = 0;
     const fetcher = (async () => {
       calls++;
       return new Response(JSON.stringify({ runId: 1, flagCount: 3, remaining: 3, status: "flagged" }));
     }) as unknown as typeof fetch;
+    await expect(continueUntilDone(1, () => {}, fetcher)).rejects.toThrow(/not making progress/);
+    expect(calls).toBe(4); // the first sets the baseline, then three that moved nothing
+  });
+
+  it("slow but steady progress is allowed to run to the cap", async () => {
+    let calls = 0;
+    const fetcher = (async () => new Response(JSON.stringify({ runId: 1, flagCount: 100, remaining: 100 - ++calls, status: "flagged" }))) as unknown as typeof fetch;
     await expect(continueUntilDone(1, () => {}, fetcher)).rejects.toThrow(/longer than expected/);
     expect(calls).toBe(20);
   });

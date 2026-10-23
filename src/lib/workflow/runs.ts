@@ -192,7 +192,10 @@ export async function decideRun(
     const flagIdBySku = new Map(flagRows.map((f) => [f.skuId, f.id]));
     const batchSize = Math.max(1, rules.ai.concurrency);
     for (let i = 0; i < todo.length; i += batchSize) {
-      if (Date.now() - started >= budgetMs) break; // out of time: save what is done and hand back
+      // Out of time: save what is done and hand back. A budget of 0 means "decide nothing now". Any other budget always
+      // allows the first batch, however long the set-up took (a slow database link once left a request with no time at
+      // all, so every request made no progress and the run never finished).
+      if (budgetMs === 0 || (i > 0 && Date.now() - started >= budgetMs)) break;
       const batch = await generateDecisions({
         client,
         run: { as_of_date: summary.as_of_date, is_festival: summary.is_festival, flags: todo.slice(i, i + batchSize).map(toFlagRecord) },

@@ -1,3 +1,4 @@
 {
+  "regions": ["sin1"],
   "crons": [{ "path": "/api/cron/kill-check", "schedule": "30 0 * * *" }]
 }

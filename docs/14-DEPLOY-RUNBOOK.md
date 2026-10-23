@@ -21,8 +21,8 @@ Nothing secret is ever typed into chat or committed. A value goes from where it 
 
 | Need | Used for | How it is provided |
 |---|---|---|
-| **Vercel access token** (account, Tokens; scoped to the team; short expiry) | create the project, set variables, deploy | copy it, then say "copied Vercel" |
-| **Neon API key** (account, API keys) | create the `preview` and `production` branches and read their connection strings | copy it, then say "copied Neon". Without it: create the two branches in the Neon console and copy each connection string, one at a time, saying which it is |
+| **Vercel** | create the project, set variables, deploy | **done, no token needed**: the Vercel CLI on the deploying machine is signed in (team `anshull-mesa`), the project `freshroots-demand-planning` exists and is linked to the GitHub repo |
+| **Neon connection strings** (pooled and direct) for each database | the app and migrations | the preview database is the current dev branch. For **production**, create an empty branch `production` in the Neon console, then copy each string, saying which it is ("copied Neon production pooled", and so on). An API key is not needed |
 | Gemini key | the AI step | already on the machine in `.env.local`. It is pushed to Vercel without being shown |
 | `AUTH_SECRET`, `CRON_SECRET` | sessions, cron | generated per environment by the deployer (different value in preview and production) |
 | Real names and emails of the six people | the accounts | in `users.local.json` (git-ignored), then `npm run seed:users`. Passwords are generated, written to `.seed-passwords.local.txt`, and handed over privately |
@@ -63,6 +63,12 @@ Set in Vercel per environment (`vercel env add NAME production|preview`, value f
 7. **Go-live reset of Kill 1.** Kill 1 counts reviews since the database was migrated. On go-live day, set the epoch to that moment (re-arm count: `UPDATE kill_state SET kill1_epoch_start = now()`) so test reviews never count.
 8. **Production deploy, only after approval.** Merge to `main`, confirm `/api/health/deep` (with the cron secret) reports `ok: true`, then sign in as each role once.
 9. Watch the first daily kill-check (06:00 India next morning): `/kill` shows it, the audit log shows `kill2.*` only if a level was crossed.
+
+### Status of the preview (2026-10-23)
+- Deployed from `phase-8-deploy` with `npx vercel deploy`, functions pinned to Singapore (`vercel.json` `regions: ["sin1"]`) beside the Neon database. Vercel's own sign-in protects previews; the test uses an automation bypass secret (kept in the git-ignored `.preview-secrets.local.json`, never in Vercel's variables).
+- All seven end-to-end tests passed against it (mock AI, resume loop exercised, headers and lockout checked on the live site).
+- One run with real Gemini from Vercel: 7 flags, 7 decisions in 5 s, 0 fallbacks (`npm run smoke:preview`). The preview currently has the real AI. To repeat the end-to-end test, first add the three test hooks (section 3) to the preview, redeploy, and remove them again afterwards.
+- Bug found only on the live site: with a short budget, each "carry on" request spent it all on database round trips from the US and finished nothing. Every request now always does at least one batch, and the browser stops and says so if three requests in a row make no progress.
 
 ## 5. Before every run, every week
 

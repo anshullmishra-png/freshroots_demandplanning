@@ -70,6 +70,17 @@ describe("the AI step saves its progress and can be resumed", () => {
     expect(client.calls).toHaveLength(7); // each flag went to the model exactly once
   });
 
+  it("any budget above 0 still allows one batch, however little time is left (a slow database link must not stall a run)", async () => {
+    const run = await newSeedRun(db, { createdBy: u.raghav.id, rules, budgetMs: 0 });
+    const client = createMockClient(slow(40));
+    let state = await finish(run.runId, client, 1); // 1 ms: already spent before the first call
+    expect(state.remaining).toBe(5); // exactly one batch of two
+    let calls = 0;
+    while (state.remaining > 0 && calls++ < 10) state = await finish(run.runId, client, 1);
+    expect(calls).toBe(3); // 5 -> 3 -> 1 -> 0
+    expect(state).toMatchObject({ remaining: 0, status: "in_review" });
+  });
+
   it("two requests carrying on at the same moment still leave one decision per flag and one completion", async () => {
     const run = await newSeedRun(db, { createdBy: u.raghav.id, rules, budgetMs: 0 });
     await Promise.all([finish(run.runId), finish(run.runId)]);
