@@ -8,6 +8,7 @@ import {
   CoverBar,
   Label,
   Pill,
+  ProgressBar,
   btnPrimary,
   btnSecondary,
   cx,
@@ -45,6 +46,7 @@ export function ReviewBoard({ data, canReview, canContinue = false }: { data: Re
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [filter, setFilter] = useState<"all" | "pending" | "judgment" | "reviewed">("all");
 
   const { counts, run } = data;
   const reviewed = counts.accepted + counts.rejected;
@@ -96,14 +98,17 @@ export function ReviewBoard({ data, canReview, canContinue = false }: { data: Re
 
   return (
     <div className="flex flex-col gap-8">
-      <Card>
+      <Card className="border-l-4 border-l-gold">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <Label>Run {run.id}</Label>
-            <h1 className="text-[32px] font-bold leading-tight text-sapphire">Review AI decisions</h1>
+            <h1 className="text-[28px] font-bold leading-tight tracking-tight text-sapphire md:text-[32px]">Review AI decisions</h1>
             <p className="mt-1 text-sm text-mutedtext">
               Data as of {run.asOfDate}
               {run.isFestival ? " (festival month, 25% uplift applied)" : ""} · rules {run.rulesVersion}
+            </p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-sapphire">
+              The rules flagged these SKUs and the AI recommends what to do. Nothing is ordered until you accept a decision or change it.
             </p>
           </div>
           <div className="text-right">
@@ -112,6 +117,9 @@ export function ReviewBoard({ data, canReview, canContinue = false }: { data: Re
             </p>
             <p className="text-sm text-mutedtext">reviewed</p>
           </div>
+        </div>
+        <div className="mt-4">
+          <ProgressBar value={reviewed} max={Math.max(counts.total, 1)} label="Decisions reviewed" tone="emerald" />
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <Pill tone="quoted">{counts.pending} to review</Pill>
@@ -211,13 +219,41 @@ export function ReviewBoard({ data, canReview, canContinue = false }: { data: Re
         </Card>
       )}
 
+      {data.items.length > 0 && (
+        <div role="group" aria-label="Filter decisions" className="-mb-4 flex flex-wrap gap-2">
+          {(
+            [
+              ["all", "All", data.items.length],
+              ["pending", "To review", counts.pending],
+              ["judgment", "Needs judgment", data.items.filter((i) => i.needsJudgment).length],
+              ["reviewed", "Reviewed", reviewed],
+            ] as const
+          ).map(([id, label, n]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={filter === id}
+              onClick={() => setFilter(id)}
+              className={cx(
+                "min-h-[44px] rounded-full px-4 text-sm font-bold",
+                filter === id ? "bg-sapphire text-white" : "border border-border bg-surface text-sapphire hover:bg-rowhover",
+              )}
+            >
+              {label} ({n})
+            </button>
+          ))}
+        </div>
+      )}
+
       {data.items.length === 0 ? (
         <Card>
           <p className="text-sapphire">No SKUs were flagged in this run. Nothing to review.</p>
         </Card>
       ) : (
         <ul className="flex flex-col gap-4">
-          {data.items.map((item) => (
+          {data.items
+            .filter((i) => (filter === "all" ? true : filter === "pending" ? i.status === "pending_review" : filter === "judgment" ? i.needsJudgment : i.review !== null))
+            .map((item) => (
             <li key={item.aiDecisionId}>
               <ItemCard
                 item={item}
@@ -252,9 +288,9 @@ function ItemCard(props: {
   return (
     <article
       className={cx(
-        "rounded-card border bg-surface p-5 shadow-[0_1px_2px_rgba(0,0,0,0.05)]",
+        "rounded-card border border-l-4 bg-surface p-5 shadow-[0_1px_2px_rgba(0,45,114,0.05),0_10px_28px_-16px_rgba(0,45,114,0.18)]",
         // Reviewed items keep full contrast: dimming them with opacity pushed their text below 4.5:1.
-        item.needsJudgment && pending ? "border-2 border-gold" : "border-border",
+        item.review?.outcome === "accepted" ? "border-border border-l-emerald" : item.review?.outcome === "rejected" ? "border-border border-l-dangermuted" : item.needsJudgment ? "border-border border-l-gold" : "border-border border-l-sapphire",
       )}
       aria-label={`${item.skuId} ${item.skuName}`}
     >
@@ -292,6 +328,7 @@ function ItemCard(props: {
           <p className="mt-2 text-xs text-mutedtext">
             {item.unitsOnHand} on hand · {item.coverWeeks.toFixed(2)} weeks of cover · demand ratio {item.demandRatio.toFixed(2)}
           </p>
+          <p className="mt-1 text-xs text-mutedtext">Rule engine said: {describeDecision(item.ruleAction, item.ruleQty)}</p>
         </div>
         <div>
           <p className="text-sm leading-6 text-sapphire">{item.explanation}</p>
@@ -307,7 +344,7 @@ function ItemCard(props: {
       </div>
 
       {pending && canReview && !rejecting && (
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-5 flex flex-wrap gap-3 border-t border-border pt-4">
           <button type="button" className={btnPrimary} onClick={props.onAccept} disabled={busy}>
             <Check size={18} aria-hidden="true" />
             Accept

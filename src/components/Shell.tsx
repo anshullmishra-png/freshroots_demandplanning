@@ -4,9 +4,10 @@ import { Suspense, type ReactNode } from "react";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { NavLinks } from "@/components/NavLinks";
 import { SignOutButton } from "@/components/SignOutButton";
+import { SystemStatus } from "@/components/SystemStatus";
 import { StatusBanner } from "@/components/StatusBanner";
 import { PageContainer, SkeletonBlock } from "@/components/ui";
-import { navFor, tabsFor, type Permission } from "@/lib/auth/permissions";
+import { ROLE_LABELS, navFor, tabsFor, type Permission } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/server";
 import type { SessionUser } from "@/lib/auth/session";
 
@@ -14,7 +15,7 @@ import type { SessionUser } from "@/lib/auth/session";
  * The page frame: skip link, sticky header, a slot for the status banner, the page, and on phones a fixed bottom tab
  * bar (docs/08, layout). Pure, so the browser checks can render it with fixture data and no database.
  */
-export function ShellFrame({ user, banner, children }: { user: Pick<SessionUser, "name" | "role">; banner?: ReactNode; children: ReactNode }) {
+export function ShellFrame({ user, banner, status, children }: { user: Pick<SessionUser, "name" | "role">; banner?: ReactNode; status?: ReactNode; children: ReactNode }) {
   const initials = user.name
     .split(/\s+/)
     .map((p) => p[0])
@@ -29,25 +30,32 @@ export function ShellFrame({ user, banner, children }: { user: Pick<SessionUser,
       >
         Skip to main content
       </a>
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-border bg-surface px-4 md:px-8">
-        <Link href="/" className="flex min-h-[44px] items-center gap-2 text-lg font-bold text-sapphire">
-          <span className="flex h-8 w-8 items-center justify-center rounded-btn bg-sapphire text-white">
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 bg-sapphire px-4 text-white shadow-[0_2px_12px_-4px_rgba(0,45,114,0.5)] md:px-8">
+        <Link href="/" className="flex min-h-[44px] items-center gap-3 text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-btn bg-gold text-sapphire">
             <Sprout size={20} aria-hidden="true" />
           </span>
-          Freshroots
+          <span className="leading-tight">
+            <span className="block text-lg font-bold">Freshroots</span>
+            <span className="hidden text-[11px] font-semibold uppercase tracking-[0.12em] text-white/70 sm:block">Demand planning</span>
+          </span>
         </Link>
         <div className="hidden md:block">
           <NavLinks items={navFor(user.role)} />
         </div>
         <div className="flex items-center gap-3">
+          {status}
           {/* The visible initials are part of the accessible name (WCAG label-in-name); the rest is for screen readers. */}
-          <Link href="/account" className="flex h-11 w-11 items-center justify-center rounded-full bg-sapphire text-sm font-bold text-white">
+          <Link href="/account" className="flex h-11 w-11 items-center justify-center rounded-full bg-gold text-sm font-bold text-sapphire">
             <span>{initials}</span>
             <span className="sr-only">, your account, {user.name}</span>
           </Link>
-          <span className="hidden text-xs font-bold uppercase tracking-wide text-sapphire lg:inline">{user.name}</span>
+          <span className="hidden leading-tight lg:block">
+            <span className="block text-sm font-semibold">{user.name}</span>
+            <span className="block text-xs text-white/70">{ROLE_LABELS[user.role]}</span>
+          </span>
           <div className="hidden md:block">
-            <SignOutButton />
+            <SignOutButton onDark />
           </div>
         </div>
       </header>
@@ -67,6 +75,11 @@ export function Shell({ user, children }: { user: SessionUser; children: ReactNo
           <StatusBanner role={user.role} />
         </Suspense>
       }
+      status={
+        <Suspense fallback={null}>
+          <SystemStatus />
+        </Suspense>
+      }
     >
       {children}
     </ShellFrame>
@@ -78,7 +91,7 @@ export function PageSkeleton() {
   return (
     <div className="min-h-screen bg-ivory" role="status" aria-busy="true">
       <span className="sr-only">Loading the page</span>
-      <div className="h-16 border-b border-border bg-surface" />
+      <div className="h-16 bg-sapphire" />
       <PageContainer>
         <SkeletonBlock className="mb-8 h-24" />
         <div className="grid gap-8 md:grid-cols-2">

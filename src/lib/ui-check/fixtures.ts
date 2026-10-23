@@ -31,6 +31,8 @@ const base: Omit<ReviewItemDto, "aiDecisionId" | "skuId" | "skuName" | "flagType
   demandRatio: 1.21,
   unitsOnHand: 900,
   standardQty: 500,
+  ruleAction: "REORDER",
+  ruleQty: 750,
   action: "REORDER",
   quantity: 750,
   explanation:

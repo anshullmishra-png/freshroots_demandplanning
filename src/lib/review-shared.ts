@@ -57,6 +57,9 @@ export interface ReviewItemDto {
   demandRatio: number;
   unitsOnHand: number;
   standardQty: number;
+  /** What the deterministic rule engine decided, before the AI. */
+  ruleAction: "REORDER" | "PAUSE_ORDER";
+  ruleQty: number;
   action: "REORDER" | "PAUSE_ORDER";
   quantity: number;
   explanation: string;

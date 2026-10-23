@@ -1,9 +1,9 @@
 "use client";
 
-import { AlertTriangle, Check, Download } from "lucide-react";
+import { AlertTriangle, Check, Download, PackageSearch, PlugZap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Card, Label, Pill, btnPrimary, btnSecondary, cx, inputClass, type PillTone } from "@/components/ui";
+import { Card, EmptyState, IconBadge, Label, Pill, btnPrimary, btnSecondary, cx, inputClass, type PillTone } from "@/components/ui";
 import { HELD_MESSAGE, describeOrder, type OrderDto, type OrderStatus, type OrdersDto } from "@/lib/orders-shared";
 import { REASON_LABELS, describeDecision } from "@/lib/review-shared";
 
@@ -30,7 +30,8 @@ async function placeOrders(ids: number[], orderReference: string): Promise<void>
 
 export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; canPlace: boolean; canExport: boolean }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<Filter>("pending");
+  // Open on the first tab that has something in it: work to do, then held, then what was placed.
+  const [filter, setFilter] = useState<Filter>(data.counts.pending > 0 ? "pending" : data.counts.held > 0 ? "held" : data.counts.placed > 0 ? "placed" : "pending");
   const [selected, setSelected] = useState<number[]>([]);
   const [sharedRef, setSharedRef] = useState("");
   const [busy, setBusy] = useState<number | "bulk" | null>(null);
@@ -57,11 +58,11 @@ export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; ca
 
   return (
     <div className="flex flex-col gap-8">
-      <Card>
+      <Card className="border-l-4 border-l-gold">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <Label>Procurement</Label>
-            <h1 className="text-[32px] font-bold leading-tight text-sapphire">Orders</h1>
+            <h1 className="text-[28px] font-bold leading-tight tracking-tight text-sapphire md:text-[32px]">Orders</h1>
             <p className="mt-1 text-sm text-mutedtext">Every decision here has been reviewed by Raghav. You place the orders; this screen records that you did.</p>
           </div>
           {canExport && (
@@ -85,11 +86,14 @@ export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; ca
         </div>
       )}
 
-      <Card>
+      <Card className="border-dashed">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <Label>Zoho Inventory</Label>
-            <p className="text-sm text-sapphire">Not connected. Export the CSV and enter the orders yourself for now.</p>
+          <div className="flex items-center gap-3">
+            <IconBadge icon={PlugZap} />
+            <div>
+              <Label>Zoho Inventory</Label>
+              <p className="text-sm text-sapphire">Not connected. Export the CSV and enter the orders yourself for now.</p>
+            </div>
           </div>
           <Pill tone="expired">Not connected</Pill>
         </div>
@@ -148,11 +152,9 @@ export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; ca
       )}
 
       {shown.length === 0 ? (
-        <Card>
-          <p className="text-sapphire">
-            {total === 0 ? "No orders yet. They appear here after Raghav has reviewed a run." : `Nothing ${filter === "all" ? "here" : filter}.`}
-          </p>
-        </Card>
+        <EmptyState icon={PackageSearch} title={total === 0 ? "No orders yet" : `Nothing ${filter === "all" ? "here" : filter}`}>
+          {total === 0 ? "They appear here after Raghav has reviewed a run. Each order is a decision a person has already approved." : "Try another tab."}
+        </EmptyState>
       ) : (
         <ul className="flex flex-col gap-4">
           {shown.map((o) => (
@@ -206,7 +208,13 @@ function OrderCard({
   const isHold = o.action === "PAUSE_ORDER";
   const changed = o.source === "raghav_changed";
   return (
-    <article className={cx("rounded-card border bg-surface p-5 shadow-[0_1px_2px_rgba(0,0,0,0.05)]", o.status === "held" ? "border-dangermuted" : "border-border")} aria-label={`${o.skuId} ${o.skuName}`}>
+    <article
+      className={cx(
+        "rounded-card border border-l-4 bg-surface p-5 shadow-[0_1px_2px_rgba(0,45,114,0.05),0_10px_28px_-16px_rgba(0,45,114,0.18)]",
+        o.status === "held" ? "border-border border-l-dangermuted" : o.status === "placed" ? "border-border border-l-emerald" : "border-border border-l-sapphire",
+      )}
+      aria-label={`${o.skuId} ${o.skuName}`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           {canPlace && o.status === "pending" && (

@@ -16,8 +16,8 @@ export function NavLinks({ items }: { items: Array<{ href: string; label: string
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cx(
-              "whitespace-nowrap border-b-2 py-[21px] text-sm font-semibold text-sapphire",
-              active ? "border-gold" : "border-transparent hover:border-gold/50",
+              "whitespace-nowrap border-b-[3px] py-[19px] text-sm font-semibold",
+              active ? "border-gold text-white" : "border-transparent text-white/75 hover:text-white",
             )}
           >
             {item.label}
