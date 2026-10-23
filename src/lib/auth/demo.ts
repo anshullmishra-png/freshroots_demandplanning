@@ -11,13 +11,13 @@ type Env = Record<string, string | undefined>;
 /**
  * Open demo access: a shared link that signs the visitor in as a test account with no password, so a reviewer can look
  * around the whole app. It exists for a throwaway preview only. It needs DEMO_OPEN_ACCESS=1 and it can never switch on
- * for a Vercel production deployment, whatever the variable says. The accounts are the end-to-end test ones.
+ * for a Vercel production deployment, whatever the variable says. The accounts are the shared test ones (<role>@freshroots.test).
  */
 export function demoEnabled(env: Env = process.env): boolean {
   return env.DEMO_OPEN_ACCESS === "1" && !isProduction(env);
 }
 
-export const demoEmail = (role: Role) => `${role}@e2e.freshroots.test`;
+export const demoEmail = (role: Role) => `${role}@freshroots.test`;
 
 export function parseDemoRole(value: unknown): Role {
   if (typeof value !== "string" || !(ROLES as string[]).includes(value)) throw badRequest("BAD_ROLE", "Unknown role.");

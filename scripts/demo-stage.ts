@@ -76,7 +76,7 @@ async function main() {
   const procurement = await signIn("procurement");
   const orders = await queryDb<{ id: number }>(`SELECT id FROM buying_decisions WHERE status = 'pending' ORDER BY id`);
   if (orders && orders.length > 0) {
-    await call(procurement, "/api/orders/place", { method: "POST", body: JSON.stringify({ ids: orders.map((o) => o.id), orderReference: "PO-DEMO-001" }) });
+    await call(procurement, "/api/orders/place", { method: "POST", body: JSON.stringify({ ids: orders.map((o) => o.id), orderReference: "PO-2026-0001" }) });
     console.log(`Procurement placed ${orders.length} orders.`);
   }
   console.log("Staged. Next, live: Priya enters a loss on the Dashboard.");
