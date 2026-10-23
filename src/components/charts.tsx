@@ -9,7 +9,7 @@ import { formatLakhs, formatRupees } from "@/lib/kill/logic";
 export function TableView({ summary, head, rows }: { summary: string; head: string[]; rows: Array<Array<string | number>> }) {
   return (
     <details className="mt-3 text-sm">
-      <summary className="min-h-[44px] cursor-pointer py-3 font-semibold text-royal">{summary}</summary>
+      <summary className="min-h-[44px] cursor-pointer py-3 font-semibold text-royaltext">{summary}</summary>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[320px] text-left text-sm">
           <thead>
@@ -58,18 +58,22 @@ export function LossBand({ total, alertAbove, killAbove, state }: { total: numbe
   const fill = state === "killed" ? "bg-dangermuted" : state === "alert" ? "bg-gold" : "bg-emerald";
   return (
     <div role="img" aria-label={`Loss ${formatRupees(total)}. Alert above ${formatRupees(alertAbove)}, kill above ${formatRupees(killAbove)}.`}>
-      <div className="relative mt-6 h-3 rounded-full bg-track/40">
+      <div className="relative mt-4 h-3 rounded-full bg-track/40">
         <div className={cx("absolute inset-y-0 left-0 rounded-full", fill)} style={{ width: pct(total) }} />
-        {[
-          { v: alertAbove, label: `Alert ${formatLakhs(alertAbove).replace("Rs ", "").replace(" lakh", "L")}` },
-          { v: killAbove, label: `Kill ${formatLakhs(killAbove).replace("Rs ", "").replace(" lakh", "L")}` },
-        ].map((m) => (
-          <div key={m.label} className="absolute -top-5 bottom-[-6px]" style={{ left: pct(m.v) }}>
-            <div className="h-full w-0.5 bg-sapphire" />
-            <span className="absolute -top-0 left-1 whitespace-nowrap text-[10px] font-bold text-sapphire">{m.label}</span>
-          </div>
-        ))}
+        {/* Two lines only; their labels sit below so they can never run into each other. */}
+        <div className="absolute -bottom-1 -top-1 border-l-2 border-dashed border-sapphire" style={{ left: pct(alertAbove) }} />
+        <div className="absolute -bottom-1 -top-1 border-l-2 border-solid border-sapphire" style={{ left: pct(killAbove) }} />
       </div>
+      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold text-sapphire">
+        <li className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="inline-block h-3 border-l-2 border-dashed border-sapphire" />
+          Alert {formatLakhs(alertAbove).replace("Rs ", "").replace(" lakh", "L")}
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="inline-block h-3 border-l-2 border-solid border-sapphire" />
+          Kill {formatLakhs(killAbove).replace("Rs ", "").replace(" lakh", "L")}
+        </li>
+      </ul>
     </div>
   );
 }

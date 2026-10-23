@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:ui": "playwright test -c playwright.ui.config.ts",
     "secret-scan": "node scripts/secret-scan.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -30,6 +31,7 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@electric-sql/pglite": "^0.5.11",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/turbopack": "^4",

@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  testIgnore: "ui-audit.spec.ts", // needs a UI_CHECK build: run it with `npm run test:ui`
   fullyParallel: true,
   reporter: "list",
   use: {

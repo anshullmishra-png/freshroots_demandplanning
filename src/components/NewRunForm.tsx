@@ -106,7 +106,7 @@ export function NewRunForm({ blockedReason = null }: { blockedReason?: string | 
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-8">
         <div>
           <Label>New run</Label>
           <h1 className="text-[32px] font-bold leading-tight text-sapphire">Upload this week&apos;s SAP files</h1>
@@ -123,7 +123,7 @@ export function NewRunForm({ blockedReason = null }: { blockedReason?: string | 
           <label className="mb-4 flex min-h-[44px] items-center gap-3 text-sm font-semibold text-sapphire">
             <input
               type="checkbox"
-              className="h-5 w-5 accent-[#002D72]"
+              className="h-5 w-5 accent-sapphire"
               checked={usePrevious}
               onChange={(e) => {
                 setUsePrevious(e.target.checked);
@@ -188,7 +188,7 @@ export function NewRunForm({ blockedReason = null }: { blockedReason?: string | 
                   <label className="mt-3 flex min-h-[44px] items-center gap-3 text-sm font-semibold text-sapphire">
                     <input
                       type="checkbox"
-                      className="h-5 w-5 accent-[#002D72]"
+                      className="h-5 w-5 accent-sapphire"
                       checked={acknowledged}
                       onChange={(e) => setAcknowledged(e.target.checked)}
                     />

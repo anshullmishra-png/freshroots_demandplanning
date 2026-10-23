@@ -16,10 +16,11 @@ Premium corporate: sapphire and gold on ivory, card-based, Inter type. This come
 | `--row-hover` | `#F9F8F6` | List row hover |
 | `--track` | `#D1D5DB` | Timeline line, pending markers |
 | `--muted-text` | `#666666` | Secondary text, inactive tab |
-| `--danger-muted` | `#A65D57` | **Derived.** Killed / rejected / error. Muted terracotta, never vibrant red |
+| `--danger-muted` | `#94504A` | **Derived.** Killed / rejected / error. Muted terracotta, never vibrant red. (Was `#A65D57`; darkened in Phase 7 because text on its own tint measured 3.9:1, below the 4.5:1 minimum.) |
 | `--danger-muted-bg` | `#F3E4E2` | **Derived.** Tint behind muted danger pills and banners |
+| `--royal-text` | `#0B5FA5` | **Derived (Phase 7).** `--royal` as small TEXT reaches only 3.7:1 on white. Link text uses this; `--royal` stays for the focus ring and icons |
 
-`--danger-muted` and its tint are derived from the rule "do not use vibrant red; prefer muted tones". Everything else is from the brief.
+`--danger-muted` and its tint are derived from the rule "do not use vibrant red; prefer muted tones". `--royal-text` is derived from the contrast rule below. Everything else is from the brief. `tests/ui/contrast.test.ts` computes the contrast of every text and background pair from these values.
 
 ## Typography (Inter)
 | Style | Spec |
@@ -43,7 +44,7 @@ Use weights 400 to 800 for hierarchy. Load Inter with `next/font`.
 | Active | gold bg, sapphire text | STOCKOUT_RISK, active run step |
 | Quoted | sapphire at 10% bg, sapphire text | HIGH_DEMAND, "pending review" |
 | Expired | gray at 30% bg, gray 600 text | OVERSTOCK_RISK, AI fallback, placed |
-| Success | emerald bg, white text | Accepted, green state, completed |
+| Success | emerald bg, **sapphire text** (the brief said white; white on emerald is only 2.5:1, sapphire is 5.6:1) | Accepted, green state, completed |
 | Danger-muted | `--danger-muted-bg` bg, `--danger-muted` text | Rejected, killed, held |
 | Needs judgment | white bg, gold 2px border, sapphire text | needs_judgment items |
 
@@ -82,7 +83,7 @@ Lucide, 24px in headers and 18px in actions.
 colors: {
   sapphire: '#002D72', gold: '#F9A825', emerald: '#10B981', royal: '#1E88E5',
   ivory: '#FFF8E1', border: '#E0DDD6', highlight: '#F4F1EC', rowhover: '#F9F8F6',
-  track: '#D1D5DB', mutedtext: '#666666', dangermuted: '#A65D57', dangermutedbg: '#F3E4E2'
+  track: '#D1D5DB', mutedtext: '#666666', dangermuted: '#94504A', dangermutedbg: '#F3E4E2', royaltext: '#0B5FA5'
 },
 borderRadius: { card: '16px', btn: '10px', box: '12px' },
 fontFamily: { sans: ['Inter', 'sans-serif'] }

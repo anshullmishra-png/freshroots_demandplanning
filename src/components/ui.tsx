@@ -12,7 +12,8 @@ const PILL: Record<PillTone, string> = {
   active: "bg-gold text-sapphire",
   quoted: "bg-sapphire/10 text-sapphire",
   expired: "bg-track/30 text-gray-600",
-  success: "bg-emerald text-white",
+  // docs/08 says white text; white on emerald is 2.5:1. Sapphire on emerald is 5.6:1 (tests/ui/contrast.test.ts).
+  success: "bg-emerald text-sapphire",
   danger: "bg-dangermutedbg text-dangermuted",
   judgment: "border-2 border-gold bg-white text-sapphire",
 };
@@ -53,15 +54,47 @@ export function Label({ children }: { children: ReactNode }) {
 }
 
 const BUTTON =
-  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-btn px-5 font-bold transition duration-200 ease-in-out hover:scale-[1.02] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100";
+  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-btn px-5 font-bold transition-[transform,opacity] duration-200 ease-in-out hover:scale-[1.02] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100";
 export const btnPrimary = cx(BUTTON, "bg-gold text-sapphire");
 export const btnSecondary = cx(BUTTON, "border-2 border-sapphire bg-transparent text-sapphire");
 
 export const inputClass =
   "min-h-[44px] w-full rounded-btn border border-border bg-white px-3 text-sapphire disabled:bg-highlight disabled:text-mutedtext";
 
+/** The page's one main landmark. Extra bottom space on phones keeps content clear of the fixed tab bar. */
 export function PageContainer({ children }: { children: ReactNode }) {
-  return <main className="mx-auto w-full max-w-[1200px] px-4 py-6 md:px-8">{children}</main>;
+  return (
+    <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1200px] px-4 pb-28 pt-6 outline-none md:px-8 md:pb-6">
+      {children}
+    </main>
+  );
+}
+
+export const linkClass = "font-semibold text-royaltext underline underline-offset-2";
+
+/** What to do next, when a list has nothing in it (docs/07: every list has an empty state). */
+export function EmptyState({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
+  return (
+    <Card>
+      <h2 className="text-2xl font-semibold text-sapphire">{title}</h2>
+      {children && <p className="mt-2 text-mutedtext">{children}</p>}
+      {action && <div className="mt-4">{action}</div>}
+    </Card>
+  );
+}
+
+/** A problem the person can act on. Muted terracotta, never vibrant red (G-U1). */
+export function ErrorNotice({ children }: { children: ReactNode }) {
+  return (
+    <p role="alert" className="rounded-btn bg-dangermutedbg px-4 py-3 text-sm font-semibold text-dangermuted">
+      {children}
+    </p>
+  );
+}
+
+/** Placeholder shapes while a page loads. Fades with opacity only; still under reduced motion. */
+export function SkeletonBlock({ className }: { className?: string }) {
+  return <div aria-hidden="true" className={cx("skeleton rounded-card bg-track/40", className)} />;
 }
 
 /** Cover bar: a thin bar showing cover weeks against the allowed band (docs/08, "Cover bar"). */

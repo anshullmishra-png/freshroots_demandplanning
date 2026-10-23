@@ -56,7 +56,7 @@ export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; ca
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -109,7 +109,7 @@ export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; ca
                 setSelected([]);
               }}
               className={cx(
-                "min-h-[44px] rounded-full px-4 text-sm font-bold transition duration-200 ease-in-out",
+                "min-h-[44px] rounded-full px-4 text-sm font-bold transition-[transform,opacity] duration-200 ease-in-out",
                 filter === t.id ? "bg-sapphire text-white" : "border border-border bg-surface text-sapphire hover:bg-rowhover",
               )}
             >
@@ -210,7 +210,10 @@ function OrderCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           {canPlace && o.status === "pending" && (
-            <input type="checkbox" className="mt-1 h-5 w-5 accent-[#002D72]" checked={selected} onChange={onToggle} aria-label={`Select ${o.skuId}`} />
+            // The 20px box sits in a 44px square the finger can hit anywhere in.
+            <label className="-ml-2 -mt-2 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center">
+              <input type="checkbox" className="h-5 w-5 accent-sapphire" checked={selected} onChange={onToggle} aria-label={`Select ${o.skuId}`} />
+            </label>
           )}
           <div>
             <h3 className="text-sm font-bold text-sapphire">

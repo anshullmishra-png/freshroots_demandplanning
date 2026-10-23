@@ -76,7 +76,7 @@ export function ReviewBoard({ data, canReview }: { data: ReviewDataDto; canRevie
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -220,8 +220,8 @@ function ItemCard(props: {
     <article
       className={cx(
         "rounded-card border bg-surface p-5 shadow-[0_1px_2px_rgba(0,0,0,0.05)]",
+        // Reviewed items keep full contrast: dimming them with opacity pushed their text below 4.5:1.
         item.needsJudgment && pending ? "border-2 border-gold" : "border-border",
-        !pending && "opacity-90",
       )}
       aria-label={`${item.skuId} ${item.skuName}`}
     >
@@ -370,7 +370,7 @@ function RejectPanel({
             <label key={f} className="flex min-h-[44px] items-center gap-2 text-sm font-semibold text-sapphire">
               <input
                 type="checkbox"
-                className="h-5 w-5 accent-[#002D72]"
+                className="h-5 w-5 accent-sapphire"
                 checked={flagTypes.includes(f)}
                 onChange={(e) => setFlagTypes((cur) => (e.target.checked ? [...cur, f] : cur.filter((x) => x !== f)))}
               />
