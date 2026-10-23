@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Check, Download, PackageSearch, PlugZap } from "lucide-react";
+import { AlertTriangle, Check, Download, ExternalLink, PackageSearch, PlugZap, RefreshCw, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Card, EmptyState, IconBadge, Label, Pill, btnPrimary, btnSecondary, cx, inputClass, type PillTone } from "@/components/ui";
@@ -36,6 +36,8 @@ export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; ca
   const [sharedRef, setSharedRef] = useState("");
   const [busy, setBusy] = useState<number | "bulk" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [zohoBusy, setZohoBusy] = useState<"send" | "sync" | null>(null);
+  const [zohoNote, setZohoNote] = useState<{ text: string; links: Array<{ number: string; url: string }>; problems: string[] } | null>(null);
 
   const shown = useMemo(() => data.orders.filter((o) => filter === "all" || o.status === filter), [data.orders, filter]);
   const pendingShown = shown.filter((o) => o.status === "pending");
@@ -53,6 +55,50 @@ export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; ca
       setError(e instanceof Error ? e.message : "Could not save.");
     } finally {
       setBusy(null);
+    }
+  }
+
+  /** The orders in the selection that Zoho can take: reorders that have no draft there yet. */
+  const sendable = selected.filter((id) => {
+    const o = data.orders.find((x) => x.id === id);
+    return o && o.action === "REORDER" && !o.zohoPoNumber;
+  });
+
+  async function zohoCall(kind: "send" | "sync") {
+    setZohoBusy(kind);
+    setError(null);
+    setZohoNote(null);
+    try {
+      const res = await fetch(kind === "send" ? "/api/zoho/send" : "/api/zoho/sync", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: kind === "send" ? JSON.stringify({ ids: sendable }) : undefined,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error?.message ?? `Zoho did not answer (${res.status}).`);
+      if (kind === "send") {
+        const n = json.purchaseOrders.length;
+        setZohoNote({
+          text:
+            json.sent > 0
+              ? `Drafted ${n} purchase order${n === 1 ? "" : "s"} in Zoho for ${json.sent} SKU${json.sent === 1 ? "" : "s"}. Open ${n === 1 ? "it" : "them"} in Zoho, check the price and issue ${n === 1 ? "it" : "them"}.`
+              : "Nothing new was sent to Zoho.",
+          links: json.purchaseOrders.map((p: { number: string; url: string }) => ({ number: p.number, url: p.url })),
+          problems: json.failed.map((f: { skuId: string; error: string }) => `${f.skuId}: ${f.error}`),
+        });
+        setSelected([]);
+      } else {
+        setZohoNote({
+          text: json.placed > 0 ? `${json.placed} order${json.placed === 1 ? " was" : "s were"} issued in Zoho and are now marked placed.` : "Nothing has been issued in Zoho yet.",
+          links: [],
+          problems: [...(json.reset > 0 ? [`${json.reset} draft(s) were cancelled in Zoho and can be sent again.`] : []), ...json.errors],
+        });
+      }
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Zoho could not be reached.");
+    } finally {
+      setZohoBusy(null);
     }
   }
 
@@ -86,17 +132,53 @@ export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; ca
         </div>
       )}
 
-      <Card className="border-dashed">
+      <Card className={data.zoho.connected ? "" : "border-dashed"}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <IconBadge icon={PlugZap} />
+            <IconBadge icon={PlugZap} tone={data.zoho.connected ? "emerald" : "sapphire"} />
             <div>
               <Label>Zoho Inventory</Label>
-              <p className="text-sm text-sapphire">Not connected. Export the CSV and enter the orders yourself for now.</p>
+              <p className="text-sm text-sapphire">
+                {data.zoho.connected
+                  ? "Connected. Reviewed orders go to Zoho as drafts, one per distributor. You check the price and issue them there."
+                  : "Not connected. Export the CSV and enter the orders yourself for now."}
+              </p>
             </div>
           </div>
-          <Pill tone="expired">Not connected</Pill>
+          {data.zoho.connected ? (
+            canPlace && (
+              <button type="button" className={btnSecondary} disabled={zohoBusy !== null} onClick={() => zohoCall("sync")}>
+                <RefreshCw size={18} aria-hidden="true" />
+                {zohoBusy === "sync" ? "Checking..." : "Check Zoho for issued orders"}
+              </button>
+            )
+          ) : (
+            <Pill tone="expired">Not connected</Pill>
+          )}
         </div>
+        {zohoNote && (
+          <div role="status" className="mt-4 rounded-btn bg-emerald/15 px-4 py-3 text-sm text-sapphire">
+            <p className="font-semibold">{zohoNote.text}</p>
+            {zohoNote.links.length > 0 && (
+              <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                {zohoNote.links.map((l) => (
+                  <li key={l.number}>
+                    <a href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center gap-1 font-bold text-royaltext underline underline-offset-2">
+                      {l.number} in Zoho <ExternalLink size={14} aria-hidden="true" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {zohoNote.problems.length > 0 && (
+              <ul className="mt-2 list-disc pl-5 text-dangermuted">
+                {zohoNote.problems.map((p) => (
+                  <li key={p}>{p}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </Card>
 
       <div role="tablist" aria-label="Order status" className="flex flex-wrap gap-2">
@@ -143,7 +225,13 @@ export function OrdersBoard({ data, canPlace, canExport }: { data: OrdersDto; ca
             >
               {selected.length === pendingShown.length ? "Clear selection" : `Select all pending (${pendingShown.length})`}
             </button>
-            <button type="button" className={btnPrimary} disabled={selected.length === 0 || busy !== null} onClick={() => run("bulk", selected, sharedRef)}>
+            {data.zoho.connected && (
+              <button type="button" className={btnPrimary} disabled={sendable.length === 0 || zohoBusy !== null} onClick={() => zohoCall("send")}>
+                <Send size={18} aria-hidden="true" />
+                {zohoBusy === "send" ? "Sending..." : `Send ${sendable.length} to Zoho as drafts`}
+              </button>
+            )}
+            <button type="button" className={data.zoho.connected ? btnSecondary : btnPrimary} disabled={selected.length === 0 || busy !== null} onClick={() => run("bulk", selected, sharedRef)}>
               <Check size={18} aria-hidden="true" />
               {busy === "bulk" ? "Saving..." : `Mark ${selected.length} selected as placed`}
             </button>
@@ -227,9 +315,15 @@ function OrderCard({
             <h3 className="text-sm font-bold text-sapphire">
               {o.skuId} <span className="font-normal text-mutedtext">{o.skuName}</span>
             </h3>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <Pill tone={changed ? "judgment" : "success"}>{changed ? "Raghav changed" : "AI accepted"}</Pill>
               <Pill tone={STATUS_TONE[o.status]}>{o.status}</Pill>
+              {o.zohoPoNumber && o.status === "pending" && <Pill tone="active">Draft in Zoho · {o.zohoPoNumber}</Pill>}
+              {o.zohoPoNumber && o.zohoPoUrl && (
+                <a href={o.zohoPoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center gap-1 text-xs font-bold text-royaltext underline underline-offset-2">
+                  Open in Zoho <ExternalLink size={12} aria-hidden="true" />
+                </a>
+              )}
             </div>
           </div>
         </div>

@@ -95,19 +95,23 @@ const order = (over: Partial<OrderDto>): OrderDto => ({
   dataAgeDays: 4,
   placedAt: null,
   placedBy: null,
+  distributorName: "NutriFlow Distributors",
+  zohoPoNumber: null,
+  zohoPoUrl: null,
   ...over,
 });
 
 export const ordersFixture: OrdersDto = {
   orders: [
     order({ id: 1 }),
-    order({ id: 2, skuId: "SKU003", skuName: "Freshroots Brown Rice 1kg", quantity: 300, aiQuantity: 300, source: "raghav_changed", reasonCode: "WRONG_QUANTITY", reasonText: "Smaller batch this week.", aiAction: "REORDER" }),
+    order({ id: 2, skuId: "SKU003", skuName: "Freshroots Brown Rice 1kg", quantity: 300, aiQuantity: 300, source: "raghav_changed", reasonCode: "WRONG_QUANTITY", reasonText: "Smaller batch this week.", aiAction: "REORDER", zohoPoNumber: "PO-00012", zohoPoUrl: "https://inventory.zoho.in/app/1000#/purchaseorders/1" }),
     order({ id: 3, skuId: "SKU006", skuName: "Freshroots Quinoa 500g", action: "PAUSE_ORDER", quantity: 0, aiAction: "PAUSE_ORDER", aiQuantity: 0 }),
     order({ id: 4, skuId: "SKU011", skuName: "Freshroots Multigrain Bread 400g", quantity: 500, aiQuantity: 500, status: "held" }),
     order({ id: 5, skuId: "SKU004", skuName: "Freshroots Almond Milk 500ml", quantity: 150, aiQuantity: 150, status: "placed", orderReference: "PO-2026-1017", placedAt: "2026-10-22T10:00:00.000Z", placedBy: "Procurement User", dataAgeDays: 3 }),
   ],
   noOrderNeeded: [order({ id: 6, skuId: "SKU013", skuName: "Freshroots Peanut Butter 300g", action: "NO_ACTION", quantity: 0, source: "raghav_changed", reasonCode: "MARKET_EVENT" })],
   counts: { pending: 3, placed: 1, held: 1, cancelled: 0 },
+  zoho: { connected: true },
 };
 
 const quarter: Quarter = { label: "2026-Q4", start: "2026-10-01", end: "2026-12-31" };

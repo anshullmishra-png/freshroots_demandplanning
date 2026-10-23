@@ -243,6 +243,12 @@ export const buyingDecisions = pgTable("buying_decisions", {
   status: buyingStatus("status").notNull().default("pending"),
   placedBy: integer("placed_by").references(() => users.id),
   placedAt: timestamp("placed_at", { withTimezone: true }),
+  // The draft purchase order made in Zoho Inventory for this decision (null until sent). The system only ever drafts;
+  // procurement issues the order in Zoho (guardrail G-B3).
+  zohoPoId: text("zoho_po_id"),
+  zohoPoNumber: text("zoho_po_number"),
+  zohoSentAt: timestamp("zoho_sent_at", { withTimezone: true }),
+  zohoSentBy: integer("zoho_sent_by").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

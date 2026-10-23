@@ -18,11 +18,13 @@ export interface BuyingDecision {
   reasonText: string | null;
   runId: number;
   asOfDate: string;
+  /** The distributor that supplies this SKU (from the SKU master): the vendor a purchase order is made out to. */
+  distributorName?: string | null;
 }
 
 export interface SinkResult {
   ref: string;
-  results: Array<{ sku_id: string; ok: boolean; error?: string }>;
+  results: Array<{ sku_id: string; ok: boolean; error?: string; decisionId?: number; purchaseOrderId?: string; purchaseOrderNumber?: string }>;
   /** Only the CSV sink returns content: the file to download. */
   content?: string;
 }

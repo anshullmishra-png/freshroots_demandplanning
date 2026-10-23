@@ -112,3 +112,14 @@ To publish an update: finish the work, merge it into `main`, run the checks, the
 To put the story back to the start (every decision waiting for Raghav): `npm run e2e:reset -- --host <preview database host>` and then `E2E_BASE_URL=https://freshroots-demand-planning-demo.vercel.app npm run demo:stage`.
 
 The link moved to this build automatically on 2026-10-23 when `live` was pushed; no manual alias step is needed.
+
+## 10. Zoho Inventory (Phase 9)
+Connected per environment with five settings: `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_ORG_ID`, `ZOHO_DC` (`in` for zoho.in). Without them the Orders page says "Not connected" and the CSV export is the way out, exactly as before.
+
+One-time setup (the owner gives the three values through the clipboard; none is printed):
+1. In https://api-console.zoho.in make a **Self Client**. Scopes: `ZohoInventory.settings.READ, ZohoInventory.contacts.CREATE, ZohoInventory.contacts.READ, ZohoInventory.items.CREATE, ZohoInventory.items.READ, ZohoInventory.purchaseorders.CREATE, ZohoInventory.purchaseorders.READ`.
+2. `npx tsx scripts/zoho-setup.ts exchange` trades the 10-minute code for a permanent refresh token and finds the organisation id.
+3. `npx tsx scripts/zoho-setup.ts seed` adds the distributors as vendors and the SKUs as items (no prices). `check` shows what is there.
+4. Add the five settings to Vercel for the environment (`vercel env add`, value from stdin).
+
+Day to day: procurement presses **Send to Zoho as drafts**, opens each draft from the link, checks the price, **issues it in Zoho**, then presses **Check Zoho for issued orders**: those orders turn placed with the Zoho number. The app never issues, approves, cancels or deletes anything in Zoho.
