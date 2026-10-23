@@ -9,12 +9,14 @@ import type { SessionUser } from "./session";
 type Env = Record<string, string | undefined>;
 
 /**
- * Open demo access: a shared link that signs the visitor in as a test account with no password, so a reviewer can look
- * around the whole app. It exists for a throwaway preview only. It needs DEMO_OPEN_ACCESS=1 and it can never switch on
- * for a Vercel production deployment, whatever the variable says. The accounts are the shared test ones (<role>@freshroots.test).
+ * Open access: a shared link that signs the visitor in as a test account with no password, so a reviewer can look
+ * around the whole app. It needs DEMO_OPEN_ACCESS=1. On a Vercel production deployment that alone is NOT enough: it also
+ * needs ALLOW_OPEN_ACCESS_ON_PRODUCTION=1, a second, deliberate switch, so a copied setting can never open a real
+ * production by accident. The accounts are the shared test ones (<role>@freshroots.test).
  */
 export function demoEnabled(env: Env = process.env): boolean {
-  return env.DEMO_OPEN_ACCESS === "1" && !isProduction(env);
+  if (env.DEMO_OPEN_ACCESS !== "1") return false;
+  return !isProduction(env) || env.ALLOW_OPEN_ACCESS_ON_PRODUCTION === "1";
 }
 
 export const demoEmail = (role: Role) => `${role}@freshroots.test`;

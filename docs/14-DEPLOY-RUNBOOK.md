@@ -123,3 +123,12 @@ One-time setup (the owner gives the three values through the clipboard; none is 
 4. Add the five settings to Vercel for the environment (`vercel env add`, value from stdin).
 
 Day to day: procurement presses **Send to Zoho as drafts**, opens each draft from the link, checks the price, **issues it in Zoho**, then presses **Check Zoho for issued orders**: those orders turn placed with the Zoho number. The app never issues, approves, cancels or deletes anything in Zoho.
+
+## 11. The shared link is the Production deployment (decided 2026-10-23)
+At the owner's request the shared address `https://freshroots-demand-planning-demo.vercel.app` is the project's **Production** deployment, published like the owner's other apps: merge to `main`, push `main`. The `live` branch is no longer needed.
+
+What that means, plainly:
+- **Production uses the TEST database** (the old preview branch), the real Gemini and the connected Zoho organisation. The empty `production` Neon branch is unused until a real go-live.
+- **Open access is on for Production** with two deliberate switches: `DEMO_OPEN_ACCESS=1` and `ALLOW_OPEN_ACCESS_ON_PRODUCTION=1`. Without the second one, Production refuses open access as before. The deep health check shows a warning while both are set.
+- Anyone with the link can sign in as any role, start runs on the real Gemini and send draft orders to Zoho. Fine while the data is test data.
+- **Real go-live later** means: point `DATABASE_URL` at the empty `production` branch, create the real accounts, and remove both switches. Production then refuses open access again.
