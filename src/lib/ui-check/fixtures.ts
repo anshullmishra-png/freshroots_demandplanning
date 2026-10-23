@@ -61,6 +61,7 @@ export const reviewFixture: ReviewDataDto = {
     rulesVersion: "1.3.0",
     status: "in_review",
     fallbackWarning: true,
+    flagCount: 7,
     asOfDate: "2026-10-19",
     isFestival: true,
     skipped: [{ sku_id: "SKU900", reason: "No sales history (possible new launch). Not forecast." }],

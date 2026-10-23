@@ -83,6 +83,7 @@ export interface ReviewDataDto {
     rulesVersion: string;
     status: string;
     fallbackWarning: boolean;
+    flagCount: number;
     asOfDate: string;
     isFestival: boolean;
     skipped: Array<{ sku_id: string; reason: string }>;

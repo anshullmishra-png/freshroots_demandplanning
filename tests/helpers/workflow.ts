@@ -65,7 +65,7 @@ export function aiRuntime(handler: MockHandler = echoHandler): AiRuntime {
 /** The seed data stored as a snapshot and run through the rule engine and the (mock) AI. */
 export async function newSeedRun(
   db: AnyDb,
-  opts: { handler?: MockHandler; createdBy?: number | null; rules?: RulesConfig } = {},
+  opts: { handler?: MockHandler; createdBy?: number | null; rules?: RulesConfig; budgetMs?: number; client?: ReturnType<typeof createMockClient> } = {},
 ): Promise<CreatedRun & { snapshotId: number }> {
   const rules = opts.rules ?? fastRules();
   const files = seedFiles();
@@ -75,9 +75,10 @@ export async function newSeedRun(
     snapshotId,
     createdBy: opts.createdBy ?? null,
     rules,
-    client: createMockClient(opts.handler ?? echoHandler),
+    client: opts.client ?? createMockClient(opts.handler ?? echoHandler),
     model: "mock-model",
     prompts,
+    budgetMs: opts.budgetMs,
   });
   return { ...run, snapshotId };
 }
@@ -86,7 +87,7 @@ export async function newSeedRun(
 export async function startSeedRun(
   db: AnyDb,
   actor: SessionUser,
-  opts: { files?: UploadFiles; acknowledgeWarnings?: boolean; handler?: MockHandler; rules?: RulesConfig } = {},
+  opts: { files?: UploadFiles; acknowledgeWarnings?: boolean; handler?: MockHandler; rules?: RulesConfig; budgetMs?: number } = {},
 ) {
   const rules = opts.rules ?? fastRules();
   return startRun(db, actor, {
@@ -95,6 +96,7 @@ export async function startSeedRun(
     rules,
     ai: aiRuntime(opts.handler),
     now: NOW,
+    budgetMs: opts.budgetMs,
   });
 }
 

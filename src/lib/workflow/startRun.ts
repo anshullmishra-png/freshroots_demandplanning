@@ -9,7 +9,7 @@ import { validateUpload } from "@/lib/validation/validate";
 import { FILE_KEYS, type FileKey, type UploadFiles, type ValidationResult } from "@/lib/validation/types";
 import { assertAutomationRunning } from "@/lib/kill/service";
 import { writeAudit } from "./audit";
-import { createRun, type CreatedRun } from "./runs";
+import { createRun, decideRun, type CreatedRun } from "./runs";
 
 const MASTER_KEYS: FileKey[] = ["sku_master", "distributor_master", "calendar"];
 
@@ -33,7 +33,7 @@ export function validateFiles(files: UploadFiles, rules: RulesConfig, now = new 
 export async function startRun(
   db: AnyDb,
   actor: SessionUser,
-  input: { files: UploadFiles; acknowledgeWarnings: boolean; rules: RulesConfig; ai: AiRuntime; now?: Date },
+  input: { files: UploadFiles; acknowledgeWarnings: boolean; rules: RulesConfig; ai: AiRuntime; now?: Date; budgetMs?: number },
 ): Promise<CreatedRun & { snapshotId: number; warnings: number }> {
   assertCan(actor.role, "start_run");
   assertCan(actor.role, "upload_data");
@@ -70,6 +70,21 @@ export async function startRun(
     client: input.ai.client,
     model: input.ai.model,
     prompts: input.ai.prompts,
+    budgetMs: input.budgetMs,
   });
   return { ...run, snapshotId, warnings: result.warnings.length };
+}
+
+/**
+ * Carries on a run whose AI decisions were not all made in one request (the time budget ran out, or the browser was
+ * closed). Same permission as starting a run. Does nothing for a run that is already open for review.
+ */
+export async function continueRun(
+  db: AnyDb,
+  actor: SessionUser,
+  runId: number,
+  input: { rules: RulesConfig; ai: AiRuntime; budgetMs?: number },
+): Promise<CreatedRun> {
+  assertCan(actor.role, "start_run");
+  return decideRun(db, { runId, rules: input.rules, client: input.ai.client, model: input.ai.model, prompts: input.ai.prompts, budgetMs: input.budgetMs });
 }

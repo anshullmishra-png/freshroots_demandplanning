@@ -410,6 +410,8 @@ export interface ReviewData {
     rulesVersion: string;
     status: string;
     fallbackWarning: boolean;
+    /** Flags the rule engine raised. More than the decisions so far while the AI step is unfinished. */
+    flagCount: number;
     asOfDate: string;
     isFestival: boolean;
     skipped: Array<{ sku_id: string; reason: string }>;
@@ -487,6 +489,7 @@ export async function getReviewData(db: AnyDb, runId: number): Promise<ReviewDat
     return a.skuId < b.skuId ? -1 : a.skuId > b.skuId ? 1 : 0;
   });
 
+  const [{ n: flagCount }] = await db.select({ n: count() }).from(flags).where(eq(flags.runId, runId));
   const summary = run.summaryJson as {
     as_of_date: string;
     is_festival: boolean;
@@ -499,6 +502,7 @@ export async function getReviewData(db: AnyDb, runId: number): Promise<ReviewDat
       rulesVersion: run.rulesVersion,
       status: run.status,
       fallbackWarning: run.fallbackWarning,
+      flagCount,
       asOfDate: summary.as_of_date,
       isFestival: summary.is_festival,
       skipped: summary.skipped,

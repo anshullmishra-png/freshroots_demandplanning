@@ -14,6 +14,7 @@ import {
   flagTone,
   inputClass,
 } from "@/components/ui";
+import { continueUntilDone } from "@/lib/continue-client";
 import {
   ACTION_LABELS,
   FINAL_ACTIONS,
@@ -35,9 +36,11 @@ async function post(url: string, body: unknown): Promise<void> {
   }
 }
 
-export function ReviewBoard({ data, canReview }: { data: ReviewDataDto; canReview: boolean }) {
+export function ReviewBoard({ data, canReview, canContinue = false }: { data: ReviewDataDto; canReview: boolean; canContinue?: boolean }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [carrying, setCarrying] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -58,6 +61,22 @@ export function ReviewBoard({ data, canReview }: { data: ReviewDataDto; canRevie
       setError(e instanceof Error ? e.message : "Could not save the review.");
     } finally {
       setBusyId(null);
+    }
+  }
+
+  // The AI step did not finish in one request (or the browser was closed): carry on from where it stopped.
+  const unfinished = run.status === "flagged" && counts.total < run.flagCount;
+  async function carryOn() {
+    setCarrying(true);
+    setError(null);
+    try {
+      await continueUntilDone(run.id, (s) => setProgress(s.flagCount - s.remaining));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "The AI step stopped.");
+    } finally {
+      setCarrying(false);
+      setProgress(null);
+      router.refresh();
     }
   }
 
@@ -110,6 +129,20 @@ export function ReviewBoard({ data, canReview }: { data: ReviewDataDto; canRevie
           <p className="mt-4 rounded-btn bg-highlight px-3 py-2 text-sm text-mutedtext">Read only. Your role cannot accept or reject.</p>
         )}
       </Card>
+
+      {unfinished && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-gold bg-gold/15 px-4 py-3 text-sapphire">
+          <p className="text-sm font-semibold">
+            The AI is still preparing this run: {progress ?? counts.total} of {run.flagCount} decisions are ready.
+            {canContinue ? " Decisions that are ready can be reviewed now." : " Raghav can carry it on."}
+          </p>
+          {canContinue && (
+            <button type="button" className={btnSecondary} disabled={carrying} onClick={carryOn}>
+              {carrying ? "Working..." : "Make the remaining decisions"}
+            </button>
+          )}
+        </div>
+      )}
 
       {run.fallbackWarning && (
         <div role="alert" className="flex items-start gap-3 rounded-card border border-gold bg-gold/15 px-4 py-3 text-sapphire">
