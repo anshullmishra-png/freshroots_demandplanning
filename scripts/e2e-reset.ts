@@ -19,6 +19,9 @@ import { ROLES } from "@/lib/auth/permissions";
 
 config({ path: ".env.local", quiet: true });
 
+// What the people look like in the app. Only the case's own names are used.
+const NAMES: Record<string, string> = { raghav: "Raghav", procurement: "Procurement Team", priya: "Priya", deepa: "Deepa", ceo: "CEO", admin: "Admin" };
+
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(name);
   return i >= 0 ? process.argv[i + 1] : undefined;
@@ -47,15 +50,18 @@ async function main() {
           ON CONFLICT (id) DO UPDATE SET kill1_state = 'armed', kill2_state = 'green', kill1_epoch_start = now(), updated_at = now()`,
     );
 
+    // Only the six accounts below stay (the earlier demo and test accounts are removed), so the app shows one clean set of people.
+    await db.execute(sql`DELETE FROM users WHERE email NOT IN (${sql.join(ROLES.map((r) => sql`${r + "@freshroots.test"}`), sql`, `)})`);
+
     const creds: Record<string, { email: string; password: string }> = {};
     for (const role of ROLES) {
-      const email = `${role}@e2e.freshroots.test`;
+      const email = `${role}@freshroots.test`;
       const password = randomBytes(12).toString("base64url");
       const passwordHash = await hashPassword(password);
       await db
         .insert(users)
-        .values({ name: `${role === "ceo" ? "CEO" : role[0].toUpperCase() + role.slice(1)} Demo`, email, role, passwordHash })
-        .onConflictDoUpdate({ target: users.email, set: { name: `${role === "ceo" ? "CEO" : role[0].toUpperCase() + role.slice(1)} Demo`, passwordHash, active: true, role } });
+        .values({ name: NAMES[role], email, role, passwordHash })
+        .onConflictDoUpdate({ target: users.email, set: { name: NAMES[role], passwordHash, active: true, role } });
       creds[role] = { email, password };
     }
     writeFileSync(".e2e-credentials.local.json", JSON.stringify(creds, null, 2));

@@ -215,7 +215,7 @@ test("security: headers are on, and the sixth wrong password is locked out", asy
   expect(h["content-security-policy"]).toContain("frame-ancestors 'none'");
   expect(h["x-powered-by"]).toBeUndefined();
 
-  const email = "lockout-check@e2e.freshroots.test";
+  const email = "lockout-check@freshroots.test";
   const attempt = () => request.post("/api/auth/login", { data: { email, password: "definitely-wrong" } });
   for (let i = 0; i < 5; i++) expect((await attempt()).status()).toBe(401);
   const locked = await attempt();

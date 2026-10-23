@@ -17,8 +17,6 @@ beforeAll(async () => {
   db = await createTestDb();
   holder.db = db;
   u = await seedTestUsers(db);
-  // The demo accounts are the end-to-end ones.
-  await db.execute(sql`UPDATE users SET email = replace(email, '@freshroots.test', '@e2e.freshroots.test')`);
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -65,13 +63,13 @@ describe("when it is on, on a preview", () => {
     expect((await call("RAGHAV")).status).toBe(400);
   });
 
-  it("only ever signs in the end-to-end test accounts, never a real-looking one", async () => {
+  it("only ever signs in the shared test accounts, never a real-looking one", async () => {
     vi.stubEnv("DEMO_OPEN_ACCESS", "1");
     await db.execute(sql`UPDATE users SET email = 'raghav@company.example' WHERE id = ${u.raghav.id}`);
     try {
-      expect((await call("raghav")).status).toBe(404); // no raghav@e2e.freshroots.test any more
+      expect((await call("raghav")).status).toBe(404); // no raghav@freshroots.test any more
     } finally {
-      await db.execute(sql`UPDATE users SET email = 'raghav@e2e.freshroots.test' WHERE id = ${u.raghav.id}`);
+      await db.execute(sql`UPDATE users SET email = 'raghav@freshroots.test' WHERE id = ${u.raghav.id}`);
     }
   });
 

@@ -52,7 +52,7 @@ export function ShellFrame({ user, banner, status, children }: { user: Pick<Sess
           </Link>
           <span className="hidden leading-tight lg:block">
             <span className="block text-sm font-semibold">{user.name}</span>
-            <span className="block text-xs text-white/70">{ROLE_LABELS[user.role]}</span>
+            {ROLE_LABELS[user.role].toLowerCase() !== user.name.toLowerCase() && <span className="block text-xs text-white/70">{ROLE_LABELS[user.role]}</span>}
           </span>
           <div className="hidden md:block">
             <SignOutButton onDark />

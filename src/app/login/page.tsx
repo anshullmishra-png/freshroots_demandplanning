@@ -53,9 +53,9 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {demoEnabled() && (
             <Card className="mb-6">
-              <Label>Open demo</Label>
-              <h2 className="mb-1 text-lg font-semibold text-sapphire">Look around, no password</h2>
-              <p className="mb-4 text-sm text-mutedtext">A test copy with sample data. Pick who you want to be.</p>
+              <Label>Quick access</Label>
+              <h2 className="mb-1 text-lg font-semibold text-sapphire">Continue as</h2>
+              <p className="mb-4 text-sm text-mutedtext">Choose a role to open its workspace.</p>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {DEMO_ROLES.map((role) => (
                   <li key={role}>
