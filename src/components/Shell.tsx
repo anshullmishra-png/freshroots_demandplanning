@@ -3,11 +3,13 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { NavLinks } from "@/components/NavLinks";
+import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { SignOutButton } from "@/components/SignOutButton";
 import { SystemStatus } from "@/components/SystemStatus";
 import { StatusBanner } from "@/components/StatusBanner";
 import { PageContainer, SkeletonBlock } from "@/components/ui";
 import { ROLE_LABELS, navFor, tabsFor, type Permission } from "@/lib/auth/permissions";
+import { demoEnabled } from "@/lib/auth/demo";
 import { requireUser } from "@/lib/auth/server";
 import type { SessionUser } from "@/lib/auth/session";
 
@@ -15,7 +17,20 @@ import type { SessionUser } from "@/lib/auth/session";
  * The page frame: skip link, sticky header, a slot for the status banner, the page, and on phones a fixed bottom tab
  * bar (docs/08, layout). Pure, so the browser checks can render it with fixture data and no database.
  */
-export function ShellFrame({ user, banner, status, children }: { user: Pick<SessionUser, "name" | "role">; banner?: ReactNode; status?: ReactNode; children: ReactNode }) {
+export function ShellFrame({
+  user,
+  banner,
+  status,
+  switcher,
+  children,
+}: {
+  user: Pick<SessionUser, "name" | "role">;
+  banner?: ReactNode;
+  status?: ReactNode;
+  /** "Switch role", on a preview with open access only. Hidden on phones, where the Account tab lists the roles. */
+  switcher?: ReactNode;
+  children: ReactNode;
+}) {
   const initials = user.name
     .split(/\s+/)
     .map((p) => p[0])
@@ -45,6 +60,7 @@ export function ShellFrame({ user, banner, status, children }: { user: Pick<Sess
         </div>
         <div className="flex items-center gap-3">
           {status}
+          {switcher && <div className="hidden md:block">{switcher}</div>}
           {/* The visible initials are part of the accessible name (WCAG label-in-name); the rest is for screen readers. */}
           <Link href="/account" className="flex h-11 w-11 items-center justify-center rounded-full bg-gold text-sm font-bold text-sapphire">
             <span>{initials}</span>
@@ -80,6 +96,7 @@ export function Shell({ user, children }: { user: SessionUser; children: ReactNo
           <SystemStatus />
         </Suspense>
       }
+      switcher={demoEnabled() ? <RoleSwitcher current={user.role} /> : null}
     >
       {children}
     </ShellFrame>

@@ -8,6 +8,7 @@ import { LossEntryPanel } from "@/components/LossEntryPanel";
 import { NewRunForm } from "@/components/NewRunForm";
 import { OrdersBoard } from "@/components/OrdersBoard";
 import { ReviewBoard } from "@/components/ReviewBoard";
+import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { ShellFrame } from "@/components/Shell";
 import { StatusBannerView } from "@/components/StatusBanner";
 import type { Role } from "@/lib/auth/permissions";
@@ -81,7 +82,7 @@ async function Scene({ params }: { params: Promise<{ scene: string }> }) {
   if (!ENABLED || !(SCENES as readonly string[]).includes(scene)) notFound();
   const { role, name, banner, body } = build(scene as Scene);
   return (
-    <ShellFrame user={{ name, role }} banner={banner}>
+    <ShellFrame user={{ name, role }} banner={banner} switcher={<RoleSwitcher current={role} />}>
       {body}
     </ShellFrame>
   );
