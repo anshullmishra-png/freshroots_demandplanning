@@ -52,9 +52,27 @@ export function homeFor(role: Role): string {
   return "/dashboard";
 }
 
+/** A person's job, as docs/00 names it. Shown on the Account page. */
+export const ROLE_LABELS: Record<Role, string> = {
+  raghav: "Senior Demand Planner",
+  procurement: "Procurement team",
+  priya: "Data analyst",
+  deepa: "Head of Operations",
+  ceo: "CEO",
+  admin: "Administrator",
+};
+
 export interface NavItem {
   href: string;
   label: string;
+}
+
+/**
+ * The phone's bottom tab bar: at most four destinations (docs/08): up to three of the role's own pages, then Account,
+ * where signing out lives. A role with more pages keeps them in the header on larger screens.
+ */
+export function tabsFor(role: Role): NavItem[] {
+  return [...navFor(role).slice(0, 3), { href: "/account", label: "Account" }];
 }
 
 /** Header navigation by role (docs/08-UI-DESIGN-SYSTEM.md). */

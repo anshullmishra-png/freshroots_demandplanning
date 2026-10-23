@@ -6,6 +6,8 @@
   --gold: #f9a825;
   --emerald: #10b981;
   --royal: #1e88e5;
+  /* Derived (like the danger tokens): royal as TEXT only reaches 3.7:1 on white, below the 4.5:1 that small text needs. */
+  --royal-text: #0b5fa5;
   --ivory: #fff8e1;
   --border: #e0ddd6;
   --surface: #ffffff;
@@ -13,7 +15,8 @@
   --row-hover: #f9f8f6;
   --track: #d1d5db;
   --muted-text: #666666;
-  --danger-muted: #a65d57;
+  /* Muted terracotta, darkened from #a65d57 so text on its own tint reaches 4.5:1 (it measured 3.9:1). */
+  --danger-muted: #94504a;
   --danger-muted-bg: #f3e4e2;
 }
 
@@ -22,6 +25,7 @@
   --color-gold: var(--gold);
   --color-emerald: var(--emerald);
   --color-royal: var(--royal);
+  --color-royaltext: var(--royal-text);
   --color-ivory: var(--ivory);
   --color-border: var(--border);
   --color-surface: var(--surface);
@@ -41,6 +45,42 @@
 :focus-visible {
   outline: 3px solid var(--royal);
   outline-offset: 2px;
+}
+
+/* Keyboard focus must never land hidden under the sticky 64px header. */
+/* On phones the fixed 72px tab bar sits at the bottom: leave room so a focused control is never hidden behind it. */
+html {
+  scroll-padding-top: 80px;
+  scroll-padding-bottom: 96px;
+}
+
+/* Loading placeholders breathe with opacity only (docs/08: transforms and opacity only). */
+@keyframes skeleton-fade {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.skeleton {
+  animation: skeleton-fade 1.6s ease-in-out infinite;
+}
+
+/* People who ask their system for less motion get none: no fades, no hover growth, no smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  button:hover,
+  a:hover {
+    scale: none !important;
+  }
 }
 
 /* The page background is always ivory (no dark mode in this design system). */

@@ -10,7 +10,7 @@ import { REASON_LABELS } from "@/lib/review-shared";
 function Definition({ text }: { text: string }) {
   return (
     <details className="mt-3 text-xs text-mutedtext">
-      <summary className="min-h-[44px] cursor-pointer py-3 font-semibold text-royal">What is this?</summary>
+      <summary className="min-h-[44px] cursor-pointer py-3 font-semibold text-royaltext">What is this?</summary>
       <p className="pb-2 leading-5">{text}</p>
     </details>
   );
@@ -67,7 +67,7 @@ export function DashboardView({ data, canExport }: { data: DashboardData; canExp
         )}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
         <Kpi
           label="Quarter-to-date loss"
           pill={<Pill tone={pill2.tone}>{pill2.text}</Pill>}
@@ -118,7 +118,7 @@ export function DashboardView({ data, canExport }: { data: DashboardData; canExp
         </Kpi>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2">
         <ChartCard title="Loss in this quarter" hint="One bar per entry Priya has made.">
           {losses.length === 0 ? (
             <p className="text-sm text-mutedtext">No loss entered yet this quarter.</p>
@@ -205,7 +205,7 @@ export function DashboardView({ data, canExport }: { data: DashboardData; canExp
         )}
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-2">
         <Card>
           <h2 className="mb-2 text-2xl font-semibold text-sapphire">Is the AI trustworthy?</h2>
           <dl className="divide-y divide-border text-sm">

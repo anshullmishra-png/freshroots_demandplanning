@@ -85,7 +85,7 @@ export function RearmForm({ which, refireWarning }: { which: 1 | 2; refireWarnin
       </p>
       {refireWarning && (
         <label className="flex min-h-[44px] items-center gap-3 text-sm font-semibold text-sapphire">
-          <input type="checkbox" className="h-5 w-5 accent-[#002D72]" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} />
+          <input type="checkbox" className="h-5 w-5 accent-sapphire" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} />
           I understand Kill 2 will fire again on the next check
         </label>
       )}

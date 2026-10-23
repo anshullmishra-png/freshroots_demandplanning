@@ -3,14 +3,13 @@ import Link from "next/link";
 import { getDb } from "@/db/client";
 import { can, type Role } from "@/lib/auth/permissions";
 import { STOP_MESSAGE, formatLakhs } from "@/lib/kill/logic";
-import { getKillStatus } from "@/lib/kill/service";
+import { getKillStatus, type KillStatus } from "@/lib/kill/service";
 
 /**
  * The strip under the header on every signed-in page (guardrail G-U3). A killed state is always visible, for every
  * role. A Kill 2 alert is a gold strip. Muted colours only: never a vibrant red (G-U1).
  */
-export async function StatusBanner({ role }: { role: Role }) {
-  const status = await getKillStatus(getDb());
+export function StatusBannerView({ status, role }: { status: KillStatus; role: Role }) {
   const href = can(role, "rearm_kill") ? "/kill" : "/dashboard";
 
   if (status.stopped) {
@@ -30,7 +29,7 @@ export async function StatusBanner({ role }: { role: Role }) {
               </p>
             ))}
           </div>
-          <Link href={href} className="min-h-[44px] rounded-btn border-2 border-dangermuted px-4 py-2.5 text-sm font-bold">
+          <Link href={href} className="flex min-h-[44px] items-center rounded-btn border-2 border-dangermuted px-4 text-sm font-bold">
             See why
           </Link>
         </div>
@@ -47,7 +46,7 @@ export async function StatusBanner({ role }: { role: Role }) {
             Loss alert: quarter-to-date loss is {formatLakhs(status.kill2.loss.total)}, above the {formatLakhs(status.kill2.alertAbove)} alert level. Monitor closely.
             {status.needsAcknowledgement && <span className="font-normal"> Deepa still needs to acknowledge it this week.</span>}
           </p>
-          <Link href={href} className="min-h-[44px] rounded-btn border-2 border-sapphire px-4 py-2.5 text-sm font-bold">
+          <Link href={href} className="flex min-h-[44px] items-center rounded-btn border-2 border-sapphire px-4 text-sm font-bold">
             Details
           </Link>
         </div>
@@ -55,4 +54,9 @@ export async function StatusBanner({ role }: { role: Role }) {
     );
   }
   return null;
+}
+
+/** The live banner: reads the kill state from the database on every page request. */
+export async function StatusBanner({ role }: { role: Role }) {
+  return <StatusBannerView status={await getKillStatus(getDb())} role={role} />;
 }

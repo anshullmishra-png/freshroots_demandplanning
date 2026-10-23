@@ -61,13 +61,15 @@ export function HeldOrders({ orders }: { orders: HeldDto[] }) {
         <ul className="divide-y divide-border rounded-box border border-border">
           {orders.map((o) => (
             <li key={o.id} className="flex flex-wrap items-center gap-3 px-3 py-2 text-sm hover:bg-rowhover">
-              <input
-                type="checkbox"
-                className="h-5 w-5 accent-[#002D72]"
-                checked={selected.includes(o.id)}
-                onChange={(e) => setSelected((cur) => (e.target.checked ? [...cur, o.id] : cur.filter((x) => x !== o.id)))}
-                aria-label={`Select ${o.skuId}`}
-              />
+              <label className="-ml-2 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5 accent-sapphire"
+                  checked={selected.includes(o.id)}
+                  onChange={(e) => setSelected((cur) => (e.target.checked ? [...cur, o.id] : cur.filter((x) => x !== o.id)))}
+                  aria-label={`Select ${o.skuId}`}
+                />
+              </label>
               <span className="min-w-0 flex-1">
                 <span className="font-bold text-sapphire">{o.skuId}</span> <span className="text-mutedtext">{o.skuName} · run {o.runId}</span>
               </span>
