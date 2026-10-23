@@ -37,10 +37,17 @@ export interface OrderDto {
   dataAgeDays: number;
   placedAt: string | null;
   placedBy: string | null;
+  /** The distributor that supplies the SKU: the vendor a Zoho purchase order is made out to. */
+  distributorName: string | null;
+  /** The draft purchase order in Zoho Inventory, once it has been sent there. */
+  zohoPoNumber: string | null;
+  zohoPoUrl: string | null;
 }
 
 export interface OrdersDto {
   orders: OrderDto[];
   noOrderNeeded: OrderDto[];
   counts: Record<OrderStatus, number>;
+  /** Whether Zoho Inventory is connected, and the organisation's name when it is. */
+  zoho: { connected: boolean };
 }

@@ -1,5 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { aiDecisions, buyingDecisions, flags, reviews, runs, skus, users } from "@/db/schema";
+import { aiDecisions, buyingDecisions, distributors, flags, reviews, runs, skus, users } from "@/db/schema";
 import type { AnyDb } from "@/db/snapshots";
 import { assertCan } from "@/lib/auth/permissions";
 import type { SessionUser } from "@/lib/auth/session";
@@ -16,6 +16,9 @@ export interface OrderRow extends BuyingDecision {
   dataAgeDays: number;
   placedAt: Date | null;
   placedBy: string | null;
+  /** The draft purchase order in Zoho Inventory, once it has been sent there. */
+  zohoPoId: string | null;
+  zohoPoNumber: string | null;
 }
 
 export interface OrdersResult {
@@ -36,7 +39,7 @@ const RANK: Record<OrderStatus, number> = { pending: 0, held: 1, placed: 2, canc
 export async function getOrders(db: AnyDb, opts: { status?: OrderStatus | "all"; now?: Date } = {}): Promise<OrdersResult> {
   const today = istDate(opts.now ?? new Date());
   const rows = await db
-    .select({ b: buyingDecisions, r: reviews, d: aiDecisions, run: runs, s: skus, placer: users.name })
+    .select({ b: buyingDecisions, r: reviews, d: aiDecisions, run: runs, s: skus, placer: users.name, vendor: distributors.name })
     .from(buyingDecisions)
     .innerJoin(reviews, eq(reviews.id, buyingDecisions.reviewId))
     .innerJoin(aiDecisions, eq(aiDecisions.id, reviews.aiDecisionId))
@@ -44,9 +47,10 @@ export async function getOrders(db: AnyDb, opts: { status?: OrderStatus | "all";
     .innerJoin(runs, eq(runs.id, flags.runId))
     .innerJoin(skus, eq(skus.skuId, buyingDecisions.skuId))
     .leftJoin(users, eq(users.id, buyingDecisions.placedBy))
+    .leftJoin(distributors, eq(distributors.distributorId, skus.distributorId))
     .where(opts.status && opts.status !== "all" ? eq(buyingDecisions.status, opts.status) : undefined);
 
-  const all: OrderRow[] = rows.map(({ b, r, d, run, s, placer }) => {
+  const all: OrderRow[] = rows.map(({ b, r, d, run, s, placer, vendor }) => {
     const asOfDate = (run.summaryJson as { as_of_date: string }).as_of_date;
     const ageUntil = b.placedAt ? istDate(b.placedAt) : today;
     return {
@@ -69,6 +73,9 @@ export async function getOrders(db: AnyDb, opts: { status?: OrderStatus | "all";
       dataAgeDays: daysBetween(asOfDate, ageUntil),
       placedAt: b.placedAt,
       placedBy: placer,
+      distributorName: vendor,
+      zohoPoId: b.zohoPoId,
+      zohoPoNumber: b.zohoPoNumber,
     };
   });
 
