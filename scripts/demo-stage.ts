@@ -1,9 +1,10 @@
-// Stages the demo from the seed data, through the app's own screens' API, as the real roles would:
-// Raghav uploads the seed and starts a run, reviews it (5 accepted, 2 changed), procurement places the orders.
-// It stops there, so a viewer can continue live: Priya enters a loss, the alert fires, the switch stops it, Deepa re-arms.
+// Stages the walkthrough from the seed data, through the app's own API, as Raghav would:
+// he uploads the seed files and starts a run. The rules flag 7 SKUs and the AI recommends. Then it STOPS, with all
+// seven waiting for Raghav, so the decisions (and everything they change) happen live.
 //
 //   npm run e2e:reset -- --host <test database host>      (empties the TEST database and creates the six accounts)
-//   E2E_BASE_URL=https://<demo address> npm run demo:stage
+//   E2E_BASE_URL=https://<address> npm run demo:stage            leave every decision to Raghav
+//   E2E_BASE_URL=https://<address> npm run demo:stage -- --decide   also review (one change, six accepts) and place the orders
 //
 // Test databases only: it uses the end-to-end accounts. Nothing secret is printed.
 import { config } from "dotenv";
@@ -42,6 +43,10 @@ async function main() {
   let run = await call(raghav, "/api/runs", { method: "POST", body: form });
   for (let i = 0; i < 20 && run.remaining > 0; i++) run = await call(raghav, `/api/runs/${run.runId}/continue`, { method: "POST" });
   console.log(`Run ${run.runId}: ${run.flagCount} flags, ${run.fallbackCount} fallback, status ${run.status}`);
+  if (!process.argv.includes("--decide")) {
+    console.log("Staged: all decisions are waiting for Raghav.");
+    return;
+  }
 
   const rows = await queryDb<{ id: number; action: string; quantity: number; flag_types: string[]; standard_qty: number }>(
     `SELECT d.id, d.action::text AS action, d.quantity, f.flag_types, f.standard_qty FROM ai_decisions d JOIN flags f ON f.id = d.flag_id WHERE f.run_id = ${Number(run.runId)} ORDER BY d.id`,

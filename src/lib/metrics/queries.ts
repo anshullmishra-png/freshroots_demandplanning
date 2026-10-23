@@ -5,6 +5,7 @@ import { loadRules, type RulesConfig } from "@/lib/config/rules";
 import { istDate } from "@/lib/dates/isoWeek";
 import { getKillStatus, type KillStatus } from "@/lib/kill/service";
 import { quarterOf } from "@/lib/kill/logic";
+import { getInsights, type InsightsData } from "./insights";
 
 // Fixed definitions from docs/09-MEASUREMENT-PLAN.md (guardrail G-M3). The dashboard shows these and never redefines them.
 export const METRIC_DEFINITIONS = {
@@ -57,6 +58,8 @@ export interface DashboardData {
   runs: RunRow[];
   quality: { decisions: number; fallbackRatePct: number | null; needsJudgmentSharePct: number | null };
   workflow: { placedOrders: number; avgDataAgeDays: number | null; avgOrderLagHours: number | null; runsThisMonth: number };
+  /** The charts and the activity feed for the latest run; null before the first run. */
+  insights: InsightsData | null;
 }
 
 type Row = Record<string, unknown>;
@@ -188,6 +191,7 @@ export async function getDashboard(db: AnyDb, opts: { rules?: RulesConfig; now?:
       fallbackRatePct: decisions === 0 ? null : (num(q.fb) / decisions) * 100,
       needsJudgmentSharePct: decisions === 0 ? null : (num(q.nj) / decisions) * 100,
     },
+    insights: await getInsights(db, rules),
     workflow: {
       placedOrders: num(w.placed),
       avgDataAgeDays: round1(numOrNull(w.age_days)),

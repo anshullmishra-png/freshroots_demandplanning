@@ -27,6 +27,17 @@ export interface FlagRecord {
   judgment_reasons: string[];
 }
 
+/** Where one forecast SKU stands against its allowed cover band, flagged or not. Used for the stock-cover chart. */
+export interface SkuCover {
+  sku_id: string;
+  cover_weeks: number;
+  min_cover: number;
+  max_cover: number;
+  units_on_hand: number;
+  demand_rate: number;
+  flag_types: FlagType[];
+}
+
 export interface SkippedSku {
   sku_id: string;
   reason: string;
@@ -40,6 +51,8 @@ export interface RunResult {
   rules_version: string;
   /** Flagged SKUs, sorted by SKU id. */
   flags: FlagRecord[];
+  /** Every forecast SKU's cover against its band (flagged or not), sorted by SKU id. */
+  covers: SkuCover[];
   /** SKUs that were checked and have no flag (NO_ACTION). Not sent to the AI, not shown for review. */
   unflagged: string[];
   /** SKUs that could not be forecast. Raghav must handle these himself. */
