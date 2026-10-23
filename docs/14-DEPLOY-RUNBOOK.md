@@ -101,3 +101,12 @@ Neon project `freshroots_demandplanning` (Singapore, `aws-ap-southeast-1`) has t
 ## 8. Lessons from the first deployments
 - The very first `vercel deploy` of a new project lands on the **Production** target, not a preview (it did, on 2026-10-23, with no production variables: a public login page that could not sign anyone in; it was removed). Always deploy previews with `vercel deploy --target=preview`, and check `vercel ls --prod` shows nothing before go-live.
 - `vercel env add` reads the value from stdin and stores it as a hidden secret, which `vercel env pull` cannot show. Use Git Bash and `printf '%s'` so no newline is added, and set `MSYS_NO_PATHCONV=1` before `vercel api /v1/...` calls.
+
+## 9. The shared link and how it is updated
+The shared address is `https://freshroots-demand-planning-demo.vercel.app`. It follows the Git branch **`live`**: whatever is pushed to `live` is built by Vercel (as a preview, with the preview database and settings) and the address moves to it. Production stays empty and is not involved.
+
+To publish an update: finish the work, merge it into `main`, run the checks, then
+
+    git push origin main:live
+
+To put the story back to the start (every decision waiting for Raghav): `npm run e2e:reset -- --host <preview database host>` and then `E2E_BASE_URL=https://freshroots-demand-planning-demo.vercel.app npm run demo:stage`.
