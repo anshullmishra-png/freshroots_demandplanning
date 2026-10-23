@@ -8,6 +8,7 @@ import { loadRules } from "@/lib/config/rules";
 import type { ReviewDataDto } from "@/lib/review-shared";
 import { HeldOrders } from "@/components/HeldOrders";
 import { getOrders } from "@/lib/workflow/orders";
+import { getRunData } from "@/lib/metrics/insights";
 import { getReviewData, latestRunId } from "@/lib/workflow/review";
 
 export const metadata = { title: "Review | Freshroots Demand Planning" };
@@ -51,6 +52,7 @@ export default function ReviewPage({ searchParams }: { searchParams: Promise<{ r
               : null,
           })),
           fallbackWarningPct: loadRules().ai.fallback_warning_pct,
+          exposure: (await getRunData(db, runId))?.bySku ?? {},
         };
         const canReview = can(user.role, "review");
         // After a kill, orders wait here for Raghav's written confirmation before procurement can place them.

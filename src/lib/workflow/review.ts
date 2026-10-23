@@ -383,6 +383,8 @@ export interface ReviewItem {
   standardQty: number;
   ruleAction: "REORDER" | "PAUSE_ORDER";
   ruleQty: number;
+  /** Units the forecast says sell per week (with any festival lift): turns an order quantity into weeks of cover. */
+  demandRate: number;
   action: "REORDER" | "PAUSE_ORDER";
   quantity: number;
   explanation: string;
@@ -456,6 +458,7 @@ export async function getReviewData(db: AnyDb, runId: number): Promise<ReviewDat
     standardQty: f.standardQty,
     ruleAction: f.ruleAction,
     ruleQty: f.ruleQty,
+    demandRate: f.demandRate,
     action: d.action,
     quantity: d.quantity,
     explanation: d.explanation,

@@ -60,6 +60,7 @@ export interface ReviewItemDto {
   /** What the deterministic rule engine decided, before the AI. */
   ruleAction: "REORDER" | "PAUSE_ORDER";
   ruleQty: number;
+  demandRate: number;
   action: "REORDER" | "PAUSE_ORDER";
   quantity: number;
   explanation: string;
@@ -94,4 +95,6 @@ export interface ReviewDataDto {
   items: ReviewItemDto[];
   counts: { total: number; pending: number; accepted: number; rejected: number; voided: number; fallback: number };
   fallbackWarningPct: number;
+  /** Each SKU's quarterly share of the baseline loss, in rupees: stockout side and overstock side (an estimate). */
+  exposure: Record<string, { stockout: number; overstock: number }>;
 }

@@ -33,6 +33,7 @@ const base: Omit<ReviewItemDto, "aiDecisionId" | "skuId" | "skuName" | "flagType
   standardQty: 500,
   ruleAction: "REORDER",
   ruleQty: 750,
+  demandRate: 268.5,
   action: "REORDER",
   quantity: 750,
   explanation:
@@ -71,6 +72,7 @@ export const reviewFixture: ReviewDataDto = {
   items: reviewItems,
   counts: { total: 7, pending: 4, accepted: 1, rejected: 1, voided: 1, fallback: 1 },
   fallbackWarningPct: 30,
+  exposure: { SKU001: { stockout: 260_000, overstock: 140_000 } },
 };
 
 const order = (over: Partial<OrderDto>): OrderDto => ({
@@ -132,6 +134,41 @@ export function killStatusFixture(opts: { kill1?: "armed" | "killed"; kill2?: "g
   };
 }
 
+const cover = (skuId: string, name: string, c: number, min: number, max: number, flagTypes: string[], after: number | null = null) => ({ skuId, name, cover: c, min, max, units: 800, flagTypes, after });
+
+/** Fixed charts data for the browser checks: 15 SKUs, 16 weeks, a partly decided run. */
+export const insightsFixture: NonNullable<DashboardData["insights"]> = {
+  runId: 3,
+  asOfDate: "2026-10-19",
+  isFestival: true,
+  covers: [
+    cover("SKU001", "Freshroots Mango Drink 200ml", 3.35, 6, 14, ["HIGH_DEMAND", "STOCKOUT_RISK"], 6.1),
+    cover("SKU002", "Freshroots Oats Cookies 150g", 9.2, 6, 14, []),
+    cover("SKU003", "Freshroots Brown Rice 1kg", 4.8, 6, 14, ["STOCKOUT_RISK"], 7.4),
+    cover("SKU004", "Freshroots Fresh Paneer 200g", 1.9, 3, 4, ["STOCKOUT_RISK"]),
+    cover("SKU005", "Freshroots Quinoa 500g", 8.1, 6, 14, []),
+    cover("SKU006", "Freshroots Almond Milk 1L", 17.2, 6, 14, ["OVERSTOCK_RISK"], 17.2),
+    cover("SKU007", "Freshroots Granola 400g", 5.2, 6, 14, ["STOCKOUT_RISK"]),
+    cover("SKU008", "Freshroots Honey 250g", 10.4, 6, 14, []),
+    cover("SKU009", "Freshroots Peanut Butter 350g", 7.7, 6, 14, []),
+    cover("SKU010", "Freshroots Olive Oil 500ml", 11.0, 6, 14, []),
+    cover("SKU011", "Freshroots Fresh Curd 400g", 5.6, 3, 4, ["OVERSTOCK_RISK"]),
+    cover("SKU012", "Freshroots Basmati Rice 5kg", 12.3, 6, 14, []),
+    cover("SKU013", "Freshroots Mixed Nuts 250g", 3.9, 6, 14, ["STOCKOUT_RISK"]),
+    cover("SKU014", "Freshroots Green Tea 100g", 8.8, 6, 14, []),
+    cover("SKU015", "Freshroots Pasta 500g", 9.9, 6, 14, []),
+  ],
+  flagMix: { stockout: 4, high: 1, overstock: 2, total: 7 },
+  demand: Array.from({ length: 16 }, (_, i) => ({ week: `2026-W${27 + i}`, label: `${6 + (i % 4) * 7} ${["Jul", "Aug", "Sep", "Oct"][Math.floor(i / 4)]}`, units: 2300 + ((i * 137) % 400) + i * 20, festival: i >= 12 })),
+  funnel: { flagged: 7, reviewed: 4, toOrder: 3, placed: 2 },
+  exposure: { baselineStockout: 2_000_000, baselineOverstock: 1_100_000, atStake: 1_150_000, addressed: 640_000, bySku: {} },
+  activity: [
+    { at: "2026-10-23T10:20:00.000Z", text: "Raghav accepted SKU003: Reorder 300 units" },
+    { at: "2026-10-23T10:12:00.000Z", text: "Raghav changed SKU001 to Reorder 850 units" },
+    { at: "2026-10-23T09:55:00.000Z", text: "AI recommendations are ready for review" },
+  ],
+};
+
 export function dashboardFixture(state: "green" | "alert" | "killed"): DashboardData {
   return {
     kill: killStatusFixture({ kill2: state }),
@@ -158,6 +195,7 @@ export function dashboardFixture(state: "green" | "alert" | "killed"): Dashboard
     ],
     quality: { decisions: 21, fallbackRatePct: 4.8, needsJudgmentSharePct: 9.5 },
     workflow: { placedOrders: 12, avgDataAgeDays: 3.5, avgOrderLagHours: 5.2, runsThisMonth: 2 },
+    insights: insightsFixture,
   };
 }
 

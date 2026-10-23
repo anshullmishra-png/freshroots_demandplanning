@@ -2,7 +2,7 @@ import type { RulesConfig } from "@/lib/config/rules";
 import { formatWeek, lastCompleteWeek, parseIsoDate, parseWeek, weekIndex } from "@/lib/dates/isoWeek";
 import type { ValidatedData } from "@/lib/validation/types";
 import { gt, lt, mean, roundHalfUp } from "./numeric";
-import { FLAG_ORDER, type FlagRecord, type FlagType, type RunResult, type SkippedSku } from "./types";
+import { FLAG_ORDER, type FlagRecord, type FlagType, type RunResult, type SkippedSku, type SkuCover } from "./types";
 
 /**
  * The deterministic rule engine (docs/02-BUSINESS-RULES.md). Data in, result out: no database, no clock,
@@ -47,6 +47,7 @@ export function runRuleEngine(data: ValidatedData, rules: RulesConfig): RunResul
   const flags: FlagRecord[] = [];
   const unflagged: string[] = [];
   const skipped: SkippedSku[] = [];
+  const covers: SkuCover[] = [];
 
   const skus = [...data.skus].sort((a, b) => (a.sku_id < b.sku_id ? -1 : a.sku_id > b.sku_id ? 1 : 0));
   for (const sku of skus) {
@@ -86,6 +87,15 @@ export function runRuleEngine(data: ValidatedData, rules: RulesConfig): RunResul
     if (gt(ratio, 1 + cfg.high_demand_threshold_pct / 100)) found.add("HIGH_DEMAND");
     if (lt(cover, minCover)) found.add("STOCKOUT_RISK");
     if (gt(cover, maxCover)) found.add("OVERSTOCK_RISK");
+    covers.push({
+      sku_id: sku.sku_id,
+      cover_weeks: cover,
+      min_cover: minCover,
+      max_cover: maxCover,
+      units_on_hand: stock,
+      demand_rate: demandRate,
+      flag_types: FLAG_ORDER.filter((f) => found.has(f)),
+    });
     if (found.size === 0) {
       unflagged.push(sku.sku_id);
       continue;
@@ -152,6 +162,7 @@ export function runRuleEngine(data: ValidatedData, rules: RulesConfig): RunResul
     uplift,
     rules_version: rules.version,
     flags,
+    covers,
     unflagged,
     skipped,
   };

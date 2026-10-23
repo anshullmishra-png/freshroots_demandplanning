@@ -2,6 +2,7 @@ import { BarChart3, ClipboardCheck, Download, FileSearch, PackageCheck, ShieldCh
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { ChartCard, HBars, LossBand, LossBars, TableView, TrendLine } from "@/components/charts";
+import { ActivityFeed, CoverChart, DemandChart, ExposureMeter, FlagDonut, FunnelChart } from "@/components/infographics";
 import { Card, IconBadge, Label, PageHeader, Pill, ProgressBar, btnSecondary, cx, type PillTone } from "@/components/ui";
 import { formatLakhs, formatRupees } from "@/lib/kill/logic";
 import { METRIC_DEFINITIONS, type DashboardData } from "@/lib/metrics/queries";
@@ -87,7 +88,7 @@ const hours = (h: number) => (h < 1 ? "under 1 hour" : h === 1 ? "1 hour" : `${h
 const dayLabel = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 
 export function DashboardView({ data, canExport }: { data: DashboardData; canExport: boolean }) {
-  const { kill, losses, trend, reasons, runs, quality, workflow } = data;
+  const { kill, losses, trend, reasons, runs, quality, workflow, insights } = data;
   const k1 = kill.kill1.result;
   const k2 = kill.kill2;
   const pill2 = KILL2_PILL[k2.state];
@@ -138,6 +139,41 @@ export function DashboardView({ data, canExport }: { data: DashboardData; canExp
           <Definition text={METRIC_DEFINITIONS.quarterLoss} />
         </div>
       </Card>
+
+      {insights ? (
+        <>
+          <SectionTitle title="This week's decisions" hint={`Run ${insights.runId}, data as of ${insights.asOfDate}. These move as Raghav decides.`} />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <ChartCard title="Decision pipeline" hint="Where this week's SKUs have got to.">
+              <FunnelChart funnel={insights.funnel} />
+            </ChartCard>
+            <ChartCard title="Loss exposure addressed" hint="An estimate of the baseline loss these decisions go after.">
+              <ExposureMeter exposure={insights.exposure} />
+            </ChartCard>
+            <ChartCard title="Latest activity" hint="What just happened, newest first.">
+              <ActivityFeed items={insights.activity} />
+            </ChartCard>
+          </div>
+
+          <SectionTitle title="Where stock stands" hint="Weeks of cover for every SKU against its allowed range. Short of stock risks lost sales; too much risks write-offs." />
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+            <ChartCard title="Stock cover by SKU" hint={insights.isFestival ? "Festival month: demand is lifted 25% in the forecast." : undefined}>
+              <CoverChart items={insights.covers} />
+            </ChartCard>
+            <ChartCard title="Why SKUs were flagged" hint="A SKU can carry more than one flag.">
+              <FlagDonut mix={insights.flagMix} />
+            </ChartCard>
+          </div>
+
+          <ChartCard title="Weekly demand" hint="Units sold per week across every SKU. Festival months are shaded: the rules lift forecast demand then.">
+            <DemandChart weeks={insights.demand} />
+          </ChartCard>
+        </>
+      ) : (
+        <Waiting icon={BarChart3} title="No run yet">
+          When Raghav uploads the first SAP files, this page fills with the week&apos;s decisions, stock cover and demand.
+        </Waiting>
+      )}
 
       <SectionTitle title="Is the AI safe to rely on?" hint="Two switches watch it. Either one stops the automation on its own." />
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">

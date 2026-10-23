@@ -16,6 +16,8 @@ import {
   inputClass,
 } from "@/components/ui";
 import { continueUntilDone } from "@/lib/continue-client";
+import { coverAfter, coverState, exposureFor } from "@/lib/metrics/decision-math";
+import { formatLakhs } from "@/lib/kill/logic";
 import {
   ACTION_LABELS,
   FINAL_ACTIONS,
@@ -50,6 +52,9 @@ export function ReviewBoard({ data, canReview, canContinue = false }: { data: Re
 
   const { counts, run } = data;
   const reviewed = counts.accepted + counts.rejected;
+  const shareOf = (sku: string) => data.exposure[sku] ?? { stockout: 0, overstock: 0 };
+  const atStake = data.items.reduce((a, i) => a + exposureFor(i.ruleAction, shareOf(i.skuId)), 0);
+  const addressedSoFar = data.items.reduce((a, i) => (i.review ? a + exposureFor(i.review.finalAction, shareOf(i.skuId)) : a), 0);
   const eligible = data.items.filter((i) => i.status === "pending_review" && !i.needsJudgment && !i.isFallback);
 
   async function act(id: number, body: unknown) {
@@ -121,6 +126,10 @@ export function ReviewBoard({ data, canReview, canContinue = false }: { data: Re
         <div className="mt-4">
           <ProgressBar value={reviewed} max={Math.max(counts.total, 1)} label="Decisions reviewed" tone="emerald" />
         </div>
+        <p className="mt-3 text-sm text-sapphire">
+          Loss exposure addressed so far: <span className="font-bold">{formatLakhs(addressedSoFar)}</span> of {formatLakhs(atStake)} at stake
+          <span className="text-mutedtext"> (an estimate: the case&apos;s baseline loss, shared by sales volume)</span>
+        </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Pill tone="quoted">{counts.pending} to review</Pill>
           <Pill tone="success">{counts.accepted} accepted</Pill>
@@ -257,6 +266,7 @@ export function ReviewBoard({ data, canReview, canContinue = false }: { data: Re
             <li key={item.aiDecisionId}>
               <ItemCard
                 item={item}
+                share={shareOf(item.skuId)}
                 canReview={canReview}
                 busy={busyId === item.aiDecisionId}
                 rejecting={rejectingId === item.aiDecisionId}
@@ -275,6 +285,7 @@ export function ReviewBoard({ data, canReview, canContinue = false }: { data: Re
 
 function ItemCard(props: {
   item: ReviewItemDto;
+  share: { stockout: number; overstock: number };
   canReview: boolean;
   busy: boolean;
   rejecting: boolean;
@@ -329,6 +340,13 @@ function ItemCard(props: {
             {item.unitsOnHand} on hand · {item.coverWeeks.toFixed(2)} weeks of cover · demand ratio {item.demandRatio.toFixed(2)}
           </p>
           <p className="mt-1 text-xs text-mutedtext">Rule engine said: {describeDecision(item.ruleAction, item.ruleQty)}</p>
+          <Effect
+            heading={pending ? "If you accept" : "Effect of the decision"}
+            item={item}
+            action={item.review?.finalAction ?? item.action}
+            quantity={item.review?.finalQty ?? item.quantity}
+            share={props.share}
+          />
         </div>
         <div>
           <p className="text-sm leading-6 text-sapphire">{item.explanation}</p>
@@ -356,7 +374,7 @@ function ItemCard(props: {
         </div>
       )}
       {pending && canReview && rejecting && (
-        <RejectPanel item={item} busy={busy} onCancel={props.onCloseReject} onSave={props.onReject} />
+        <RejectPanel item={item} share={props.share} busy={busy} onCancel={props.onCloseReject} onSave={props.onReject} />
       )}
     </article>
   );
@@ -395,13 +413,36 @@ interface RejectChange {
  * Raghav changes the flag and the decision for this item and says why. He never edits rules here (G-H3).
  * Save stays disabled until the action or quantity differs from the AI's and a reason is given (G-H2).
  */
+/** What a decision does: weeks of cover before and after, and the estimated loss exposure it goes after. */
+function Effect({ heading, item, action, quantity, share }: { heading: string; item: ReviewItemDto; action: string; quantity: number; share: { stockout: number; overstock: number } }) {
+  const after = coverAfter(item.coverWeeks, item.demandRate, action, quantity);
+  const s = coverState(after, item.minCover, item.maxCover);
+  const exposure = exposureFor(action, share);
+  return (
+    <div className="mt-3 rounded-btn bg-white p-3 text-xs text-sapphire">
+      <p className="font-bold">{heading}</p>
+      <p className="mt-1">
+        Cover: {item.coverWeeks.toFixed(1)}
+        {after !== item.coverWeeks ? ` → ${after.toFixed(1)}` : ""} weeks <span className="text-mutedtext">(range {item.minCover} to {item.maxCover})</span>{" "}
+        <span className="font-bold uppercase tracking-wide">{s}</span>
+      </p>
+      <p className="mt-0.5">
+        Loss exposure addressed: <span className="font-bold">{exposure > 0 ? formatLakhs(exposure) : "none"}</span>
+        {exposure > 0 ? <span className="text-mutedtext"> a quarter (estimate)</span> : null}
+      </p>
+    </div>
+  );
+}
+
 function RejectPanel({
   item,
+  share,
   busy,
   onCancel,
   onSave,
 }: {
   item: ReviewItemDto;
+  share: { stockout: number; overstock: number };
   busy: boolean;
   onCancel: () => void;
   onSave: (change: RejectChange) => void;
@@ -496,6 +537,7 @@ function RejectPanel({
         />
       </label>
 
+      <Effect heading="With your change" item={item} action={action} quantity={qty} share={share} />
       {hint && <p className="mt-3 text-sm text-mutedtext">{hint}</p>}
       <div className="mt-4 flex flex-wrap gap-3">
         <button
