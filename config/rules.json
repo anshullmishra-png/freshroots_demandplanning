@@ -71,5 +71,10 @@
     "max_file_bytes": 5242880,
     "max_rows_per_file": 500000
   },
+  "login_protection": {
+    "max_failed_per_email": 5,
+    "max_failed_per_ip": 20,
+    "window_minutes": 15
+  },
   "timezone": "Asia/Kolkata"
 }

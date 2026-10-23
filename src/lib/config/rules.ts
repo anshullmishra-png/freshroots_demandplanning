@@ -65,6 +65,12 @@ export interface RulesConfig {
     max_file_bytes: number;
     max_rows_per_file: number;
   };
+  /** Sign-in brute-force protection: failures inside the window lock further attempts until they age out. */
+  login_protection: {
+    max_failed_per_email: number;
+    max_failed_per_ip: number;
+    window_minutes: number;
+  };
   timezone: string;
 }
 

@@ -23,7 +23,9 @@ function isFrameworkSignal(e: unknown): boolean {
 export function errorResponse(e: unknown): Response {
   if (isFrameworkSignal(e)) throw e;
   if (e instanceof AppError) {
-    return Response.json({ error: { code: e.code, message: e.message, details: e.details } }, { status: e.status });
+    const wait = (e.details as { retryAfterSeconds?: unknown } | undefined)?.retryAfterSeconds;
+    const headers = e.status === 429 && typeof wait === "number" ? { "Retry-After": String(wait) } : undefined;
+    return Response.json({ error: { code: e.code, message: e.message, details: e.details } }, { status: e.status, headers });
   }
   // Never leak internals or secrets to the caller or the logs (G-S2).
   const message = redactSecrets(e instanceof Error ? e.message : String(e)).slice(0, 300);

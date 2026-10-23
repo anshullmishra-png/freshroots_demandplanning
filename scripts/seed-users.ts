@@ -1,6 +1,7 @@
 // Creates the accounts (docs/12-OPEN-QUESTIONS.md, question 19): one per role, email + password sign-in.
 //
-//   npm run seed:users                 creates accounts from users.local.json, or demo accounts if that file is absent
+//   npm run seed:users                 creates accounts from users.local.json (refuses to run without it)
+//   npm run seed:users -- --demo       demo accounts (role@freshroots.test) when users.local.json is absent: never on production
 //   npm run seed:users -- --reset      also gives existing accounts a new password
 //
 // users.local.json (git-ignored) is a list: [{ "name": "Raghav Kulkarni", "email": "raghav@example.com", "role": "raghav" }, ...]
@@ -31,6 +32,13 @@ function readSeeds(): { seeds: Seed[]; source: string } {
       }
     }
     return { seeds: parsed, source: "users.local.json" };
+  }
+  // Demo accounts have guessable emails. Creating them has to be asked for, so they cannot reach a real deployment by accident.
+  if (!process.argv.includes("--demo")) {
+    throw new Error(
+      "users.local.json was not found. Create it with the real names and emails (see the comment at the top of this file), " +
+        "or run with --demo to create throwaway demo accounts on a local or preview database.",
+    );
   }
   const label = (r: Role) => r.charAt(0).toUpperCase() + r.slice(1);
   return {
