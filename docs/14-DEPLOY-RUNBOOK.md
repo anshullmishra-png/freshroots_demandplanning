@@ -74,7 +74,8 @@ Set in Vercel per environment (`vercel env add NAME production|preview`, value f
 Neon project `freshroots_demandplanning` (Singapore, `aws-ap-southeast-1`) has two branches, each with its own endpoint:
 - `preview` (renamed from the default branch Neon had called `production`): throwaway. Test accounts and test runs. The e2e reset wipes it.
 - `production`: a separate root branch created schema-only, then reset and built by running all six migrations, so Drizzle's own record matches. It holds **no users and no data**; the only row is `kill_state` (both switches armed and green). Its connection strings are in the git-ignored `.production-urls.local.json` on the deploying machine and are **not yet in Vercel**.
-- Not yet done for production, on purpose: Vercel production variables, the six real accounts, the Kill 1 go-live reset, the first deploy. **Merging to `main` makes Vercel deploy production automatically** (the repo is connected), so the production variables are added only when the owner approves going live.
+- Not yet done for production, on purpose: Vercel production variables, the six real accounts, the Kill 1 go-live reset, the first deploy.
+- **Lock:** the repo is connected to Vercel, which would deploy production on every push to `main`. `vercel.json` therefore has `git.deploymentEnabled.main = false` (a test pins it), so merging and pushing `main` deploys nothing. **At go-live, after the owner approves:** add the production variables, then either remove that setting in the same commit (the test says so) or run `vercel deploy --prod`, which is not affected by the lock.
 
 ## 5. Before every run, every week
 
@@ -95,3 +96,7 @@ Neon project `freshroots_demandplanning` (Singapore, `aws-ap-southeast-1`) has t
 - Zoho is not connected; procurement works from the CSV export.
 - The AI step uses a budget per request (`ai.step_budget_seconds`, 150) inside Vercel's 300 second limit and carries on in further requests. Hobby and Pro plans both allow 300 seconds on these routes.
 - The daily check runs on production only, once a day, at a time Vercel may shift within the hour on a Hobby plan.
+
+## 8. Lessons from the first deployments
+- The very first `vercel deploy` of a new project lands on the **Production** target, not a preview (it did, on 2026-10-23, with no production variables: a public login page that could not sign anyone in; it was removed). Always deploy previews with `vercel deploy --target=preview`, and check `vercel ls --prod` shows nothing before go-live.
+- `vercel env add` reads the value from stdin and stores it as a hidden secret, which `vercel env pull` cannot show. Use Git Bash and `printf '%s'` so no newline is added, and set `MSYS_NO_PATHCONV=1` before `vercel api /v1/...` calls.

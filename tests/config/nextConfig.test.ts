@@ -72,6 +72,12 @@ describe("runtime", () => {
     expect(pkg.engines.node).toBe(">=22");
   });
 
+  it("a push to main does not deploy production by itself, until go-live removes this lock on purpose", () => {
+    const v = JSON.parse(readFileSync(path.join(root, "vercel.json"), "utf8"));
+    expect(v.git.deploymentEnabled.main).toBe(false);
+    expect(v.regions).toEqual(["sin1"]);
+  });
+
   it("the cron route is the only scheduled job in vercel.json", () => {
     const v = JSON.parse(readFileSync(path.join(root, "vercel.json"), "utf8"));
     expect(v.crons).toEqual([{ path: "/api/cron/kill-check", schedule: "30 0 * * *" }]);

@@ -1,4 +1,9 @@
 {
   "regions": ["sin1"],
+  "git": {
+    "deploymentEnabled": {
+      "main": false
+    }
+  },
   "crons": [{ "path": "/api/cron/kill-check", "schedule": "30 0 * * *" }]
 }
